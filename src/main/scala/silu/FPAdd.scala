@@ -2,7 +2,7 @@ package silu
 import chisel3._
 import chisel3.util._ // needed for Cat()
 // _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
-import _root_.circt.stage.ChiselStage
+// import _root_.circt.stage.ChiselStage
 
 import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantWidths,
                    floatAdd, doubleAdd}
