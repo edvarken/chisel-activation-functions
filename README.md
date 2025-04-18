@@ -28,3 +28,5 @@ The Adder and Multiplier modules support BF16, floating point and double numbers
                 ├── relu6Test.scala
                 └── siluTest.scala
 ```
+
+Use `sbt test` to run all tests. Running only the test for SiLU can be done with `sbt 'testOnly silu.siluTest'`
