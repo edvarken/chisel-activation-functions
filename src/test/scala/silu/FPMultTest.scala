@@ -8,7 +8,6 @@ import org.scalatest.matchers.must.Matchers
 
 import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantWidths,
                    floatAdd, doubleAdd}
-import scala.collection.mutable.Queue
 
 class FPMult16Test extends AnyFreeSpec with Matchers {
     "FPMult16 should correctly multiply floating-point numbers" in {
