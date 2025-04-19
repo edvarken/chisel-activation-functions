@@ -12,8 +12,9 @@ class silu extends Module {
     val out_a = Output(Bits(16.W))
   })
 
-  // we could also bypass all this if by just returning 0 if input < -3 or returning input itself if input > 3
-  // This could be done in 0 clock cycles instead of 5 clock cycles, however the latency of silu would be unpredictable then.
+  // we could also bypass all this by just returning 0 if input < -3 or returning input itself if input > 3
+  // This could be done in 0 clock cycles instead of 5 clock cycles, however the latency of silu would be unpredictable then since latency then depends on the input value.
+  // This implementation has a fixed latency of 5 clock cycles.
 
   val a = io.in_a // a must be a BigInt
   // a + 3
