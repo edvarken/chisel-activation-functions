@@ -30,7 +30,7 @@ def printIndexedSiluTableExtensive(intBits=2, fracBits=4):
 def printIndexedSiluTableSimple(intBits=2, fracBits=4):
     # heading for the table
     print("(index      silu_bf16)")
-    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
+    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375 up to +3.9375
         silu_float = round(j/(1+math.exp(-j)), 6)
 
         # Convert float32 to 4-byte representation (big-endian)
@@ -45,6 +45,29 @@ def printIndexedSiluTableSimple(intBits=2, fracBits=4):
         print(f"({int(j < 0)}{int(abs(j)):0{intBits}b}{frac_part:0{fracBits}b}, {silu_bf16_bits})")
 
 
+def printOrderedIndexedSiluTableInChiselSyntax(intBits=2, fracBits=4):
+    for j in np.arange(0.0000, 4.0000, +0.0625):
+        silu_float = round(j/(1+math.exp(-j)), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        silu_bytes = struct.pack('>f', np.float32(silu_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        silu_bf16_bytes = silu_bytes[:2]
+        # Convert to bit string
+        silu_bf16_bits = ''.join(f'{byte:08b}' for byte in silu_bf16_bytes)
+        frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
+        print(f"\"b{silu_bf16_bits}\".U,")
+    for j in np.arange(-0.0625, -4.0, -0.0625):
+        silu_float = round(j/(1+math.exp(-j)), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        silu_bytes = struct.pack('>f', np.float32(silu_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        silu_bf16_bytes = silu_bytes[:2]
+        # Convert to bit string
+        silu_bf16_bits = ''.join(f'{byte:08b}' for byte in silu_bf16_bytes)
+        frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
+        print(f"\"b{silu_bf16_bits}\".U,")
+
+
 def printIndices(intBits, fracBits):
     for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
@@ -53,4 +76,5 @@ def printIndices(intBits, fracBits):
 if __name__ == "__main__":
     # printIndexedSiluTableExtensive()
     printIndexedSiluTableSimple()
+    # printOrderedIndexedSiluTableInChiselSyntax()
     # printIndices(intBits=2, fracBits=4)
