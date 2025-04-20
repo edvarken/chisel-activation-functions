@@ -2,7 +2,7 @@ package silu
 import chisel3._
 import chisel3.util._ // needed for Cat()
 
-class BF16toFP(val intBits: Int = 3, val fracBits: Int = 4) extends Module { // FixedPoint will have 1(Sign) + intBits + fracBits total bits
+class BF16toFP(val intBits: Int = 2, val fracBits: Int = 4) extends Module { // FixedPoint will have 1(Sign) + intBits + fracBits total bits
   val io = IO(new Bundle {
     val bf16in = Input(UInt(16.W))         // BF16 input
     val intout = Output(UInt(intBits.W))   // Integer part of fixed point output
@@ -18,12 +18,13 @@ class BF16toFP(val intBits: Int = 3, val fracBits: Int = 4) extends Module { // 
   // Bias for BF16 exponent
   val bias = 127.S
 
-  // Normalize mantissa: add implicit leading 1 for normal numbers
-  when (exponent === 0.U(8.W) && mantissa === 0.U(7.W)) { // if exponent and mantissa 0, return 0
+  
+  when (exponent === 0.U(8.W) && mantissa === 0.U(7.W)) { // if exponent and mantissa 0, return +0 or -0
     io.intout := 0.U(intBits.W) // integer part
     io.fracout := 0.U(fracBits.W) // fractional part
     io.signout := sign // sign bit
-  }.otherwise {
+
+  }.otherwise {// Normalize mantissa: add implicit leading 1 for normal numbers
     val normalizedMantissa = Cat(1.U(1.W), mantissa)//.U(8.W) // 8 bits total
 
     // calculate needed shift
