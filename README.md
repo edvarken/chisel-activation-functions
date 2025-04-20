@@ -1,10 +1,19 @@
 # BF16 Silu approximation Chisel Module
-SiLU(x) can be approximated as x * ReLU6(x+3) / 6
+## Two variations to approximate SiLU
 
-This repository contains a pipelined Adder with 3 cycles latency, a Multiplier with single cycle latency, and SiLU approximation module with 5 cycles latency.
+### 1. silu.scala 
+silu.scala approximates the SiLU(x) function as `x * ReLU6(x+3) / 6` using a pipelined Adder with 3 cycles latency, and two Multipliers each with 1 cycle latency, totaling 5 cycles latency for the SiLU approximation.
+(The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module supports only BF16 numbers)
+### 2. siluUsingLUT.scala
+siluUsingLUT.scala uses a piecewise function where 
+- SiLU(x) = 0  for x <= -4
+- SiLU(x) = one of the 128 entries in the lookup-table  for -4 < x < 4
+- SiLU(x) = x itself  for x >= 4
 
-The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module supports only BF16 numbers.
+siluUsingLUT.scala has 1 cycle latency for the SiLU approximation
 
+
+## directory tree
 ```
 ├── README.md
 ├── build.sbt
@@ -14,19 +23,26 @@ The Adder and Multiplier modules support BF16, floating point and double numbers
     ├── main
     │   └── scala
     │        └── silu
+    |            ├── BF16toFP.scala
     │            ├── FPAdd.scala
     │            ├── FPMult.scala
     │            ├── FloatUtils.scala
     │            ├── FloatWrapper.scala
     │            ├── relu6.scala
-    │            └── silu.scala
+    │            ├── silu.scala
+    |            ├── siluLUT.scala
+    |            └── siluUsingLUT.scala
     └── test
         └── scala
             └── silu
+                ├── BF16toFPTest.scala
                 ├── FPAddTest.scala
                 ├── FPMultTest.scala
                 ├── relu6Test.scala
-                └── siluTest.scala
+                ├── siluLUTTest.scala
+                ├── siluTest.scala
+                └── siluUsingLUTTest.scala
 ```
 
-Use `sbt test` to run all tests. Running only the test for SiLU can be done with `sbt 'testOnly silu.siluTest'`
+Use `sbt test` to run all tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
+Running the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
