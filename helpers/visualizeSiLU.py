@@ -33,7 +33,7 @@ def relu(x):
 if __name__ == "__main__":
     roofline_plot = plt.figure(figsize=(12, 8)) 
 
-    plt.title("SiLU function and approximations")
+    plt.title("SiLU function and two approximations")
     plt.xlabel("x") # linear x and y axes
 
     # set the x and y limits
@@ -60,10 +60,9 @@ if __name__ == "__main__":
     def relu6(x):
         return np.maximum(0, np.minimum(6, x))
     approx_silu1 = (x * relu6(x+3)) / 6
-    plt.plot(x, approx_silu1, label='x * relu6(x+3) / 6', color=colors[1], linestyle='--')
+    plt.plot(x, approx_silu1, label='SiLU1(x) = x * relu6(x+3) / 6', color=colors[1], linestyle='--')
 
     # SiLU approximation 2: piecewise linear function
-    
     # for x<=-4, y=0
     # for -4<x<4, y=one of 128 values out of a LookUpTable: just plot these values as points
     # for x>=4, y=x
@@ -71,7 +70,7 @@ if __name__ == "__main__":
 
     approx_silu2 = np.piecewise(x, [x < -4, (x >= -4) & (x < 4), x >= 4], [0, lambda x: np.nan, lambda x: x]) # use np.nan for -4<x<4
     plt.plot(outX, outY, '.', color=colors[2], markersize=3.6)
-    plt.plot(x, approx_silu2, label='y=0 for x <= -4, y = one of 128 look-up-table values for -4 < x < 4, y = x for x >= 4', color=colors[2], linestyle='-')  # Combine labels into one
+    plt.plot(x, approx_silu2, label='SiLU2(x) = 0 for x <= -4; one of 128 look-up-table values for -4 < x < 4; x for x >= 4', color=colors[2], linestyle='-')  # Combine labels into one
 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=3)  # Place legend below the plot
     plt.tight_layout()  # Adjust layout to prevent stretching
