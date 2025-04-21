@@ -6,17 +6,19 @@ In hardware however, this function needs to be approximated.
 This repository contains two different hardware descriptions of the Sigmoid-Linear-Unit(SiLU) activation function for BrainFloat16(BF16) inputs.
 It makes use of the Chisel3 framework to describe, test and generate the hardware.
 
+## Visualization of SiLU and the Two Approximative Versions
+![SiluFunctionandApproximations](helpers/SiluFunctionandApproximations.png)
 ### Version 1
-Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `x * ReLU6(x+3) / 6`.
+Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
 For this an Adder and two Multipliers are needed. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation.
 
 (The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module supports only BF16 numbers)
 
 ### Version 2
-Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate SiLU(x) 
-- SiLU(x) = 0  for x <= -4
-- SiLU(x) = one of the 128 entries in a lookup-table  for -4 < x < 4
-- SiLU(x) = x itself  for x >= 4
+Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate the SiLU function.
+- SiLU2(x) = 0  for x <= -4
+- SiLU2(x) = one of the 128 entries in a lookup-table  for -4 < x < 4
+- SiLU2(x) = x itself  for x >= 4
 
 siluUsingLUT.scala has only 1 cycle latency for the SiLU approximation
 
