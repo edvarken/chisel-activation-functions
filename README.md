@@ -3,7 +3,7 @@ Analytically: `SiLU(x) = x / (1+exp(-x))`
 
 In hardware however, this function needs to be approximated.
 
-This repository contains two different hardware implementations of the Sigmoid-Linear-Unit(SiLU) activation function for BrainFloat16(BF16) inputs.
+This repository contains two different hardware descriptions of the Sigmoid-Linear-Unit(SiLU) activation function for BrainFloat16(BF16) inputs.
 It makes use of the Chisel3 framework to describe, test and generate the hardware.
 
 ### Version 1
@@ -22,10 +22,10 @@ siluUsingLUT.scala has only 1 cycle latency for the SiLU approximation
 
 ## Chisel3 tests
 Use `sbt test` to run all chisel3 tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
-Running the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
+Running only the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
 
 ## Generate SystemVerilog RTL files
-Use `sbt run` to generate all the systemverilog files (files ending on .sv). All files are saved into the directory generated/
+Use `sbt run` to generate all the systemverilog files (files ending on .sv). All files are saved into a new directory called `generated/`
 
 ## Comparing the two versions
 ### Version 1: silu.scala
@@ -41,7 +41,7 @@ Use `sbt run` to generate all the systemverilog files (files ending on .sv). All
 
 ## directory tree
 ```
-.
+chisel-silu
 ├── LICENSE
 ├── README.md
 ├── build.sbt
@@ -74,3 +74,5 @@ Use `sbt run` to generate all the systemverilog files (files ending on .sv). All
                 ├── siluTest.scala
                 └── siluUsingLUTTest.scala
 ```
+## Acknowledgements
+Credits to https://github.com/zhemao/chisel-float/ for the floating point multiplier and adder. See LICENSE
