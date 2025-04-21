@@ -28,16 +28,33 @@ Running only the test for siluUsingLUT.scala can be done with `sbt 'testOnly sil
 Use `sbt run` to generate all the systemverilog files (files ending on .sv). All files are saved into a new directory called `generated/`
 
 ## Comparing the two versions
+For both a clock period of 5ns=5000ps is used. Synthesized in TSMC 65nm, the wiring net area is neglected.
 ### Version 1: silu.scala
-- Accuracy:
-- Area:
-- Power:
-- Latency:
+- SiLU(x) fitting accuracy:
+    - Mean Squared Error(MSE):     (lower is better)
+    - Keep in mind the inputs are in Brainfloat16. This implementation calculates x*relu6(x+3) / 6
+- Area: 
+    - 629 cells
+    - 1755.04 um^2
+- Power: 6.33941e-04 Watt?
+    - 59.61% in registers, 36.61% in logic, 3.79% in clock
+    - 84.73% is internal, 15.18% is switching, 0.10% is leakage
+- Timing path type: Register->Register
+    - slack=2630ps(higher is better)
+    - critical path delay=2263ps
 ### Version 2: siluUsingLUT.scala
-- Accuracy:
-- Area:
-- Power:
-- Latency:
+- SiLU(x) fitting accuracy:
+    - Mean Squared Error(MSE):     (lower is better)
+    - keep in mind this implementation uses a LUT with 128 entries to approximate SiLU for all BrainFloat16 inputs between -4 and +4.
+- Area: 
+    - 358 cells
+    - 599.48 um^2
+- Power: 1.14480e-04 Watt?
+    - 58.75% in registers, 38.08% in logic, 3.17% in clock
+    - 79.67% is internal, 20.19% is switching, 0.15% is leakage
+- Timing path type: Input->Register,
+    - slack=3797ps(higher is better)
+    - critical path delay=1002ps
 
 ## directory tree
 ```
