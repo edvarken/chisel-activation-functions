@@ -7,7 +7,7 @@ This repository contains two different hardware descriptions of the Sigmoid-Line
 It makes use of the Chisel3 framework to describe, test and generate the hardware.
 
 ## Visualization of SiLU and the Two Approximative Versions
-![SiluFunctionandApproximations](helpers/SiluFunctionandApproximations.png)
+![SiluFunctionandApproximations](helpers/SiLUand2ApproxFunctions.png)
 ### Version 1
 Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
 For this an Adder and two Multipliers are needed. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation.
