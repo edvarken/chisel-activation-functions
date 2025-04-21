@@ -1,4 +1,4 @@
-# BF16 Silu approximation Chisel Module
+# BF16 Silu approximation Scala Chisel3 Module
 SiLU(x) can be approximated as x * ReLU6(x+3) / 6
 
 This repository contains a pipelined Adder with 3 cycles latency, a Multiplier with single cycle latency, and SiLU approximation module with 5 cycles latency.

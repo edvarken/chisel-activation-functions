@@ -1,6 +1,8 @@
 package silu
 import chisel3._
 import chisel3.util._ // needed for Cat()
+// _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 /**
   * This is a Chisel implementation that uses a Lookup Table to approximate the SiLU activation function between -4 and +4
@@ -50,4 +52,15 @@ class siluUsingLUT extends Module {
         }
     }
     io.out_a := outputReg // output the result
+}
+
+/**
+ * Generate Verilog sources and save it in generated/siluUsingLUT.v
+ */
+object siluUsingLUT extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new siluUsingLUT,
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated")
+    )
 }
