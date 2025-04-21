@@ -1,5 +1,7 @@
 package silu
 import chisel3._
+// _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 /**
   * This is a Chisel implementation of an approximation of the SiLU activation function, which is defined as:
@@ -41,4 +43,15 @@ class silu extends Module {
   fpmult2.io.b := magic_val
   // val output = fpmult2.io.res
   io.out_a := fpmult2.io.res
+}
+
+/**
+ * Generate Verilog sources and save it in generated/silu.v
+ */
+object silu extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new silu,
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated")
+    )
 }
