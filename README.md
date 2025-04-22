@@ -31,9 +31,10 @@ Use `sbt run` to generate all the systemverilog files (files ending on .sv). All
 
 ## Comparing the two versions
 For both a clock period of 5ns=5000ps is used. Synthesized in TSMC 65nm, the wiring net area is neglected.
+The mean squared error(MSE) is calculated using 193 linearly spaced sample points in the range -6 to 6. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
 ### Version 1: silu.scala
-- SiLU(x) fitting accuracy:
-    - Mean Squared Error(MSE):     (lower is better)
+- SiLU1(x) fitting accuracy:
+    - Mean Squared Error(MSE): 0.004861
     - Keep in mind the inputs are in Brainfloat16. This implementation calculates x*relu6(x+3) / 6
 - Area: 
     - 629 cells
@@ -45,8 +46,8 @@ For both a clock period of 5ns=5000ps is used. Synthesized in TSMC 65nm, the wir
     - slack=2630ps(higher is better)
     - critical path delay=2263ps
 ### Version 2: siluUsingLUT.scala
-- SiLU(x) fitting accuracy:
-    - Mean Squared Error(MSE):     (lower is better)
+- SiLU2(x) fitting accuracy:
+    - Mean Squared Error(MSE): 0.000579
     - keep in mind this implementation uses a LUT with 128 entries to approximate SiLU for all BrainFloat16 inputs between -4 and +4.
 - Area: 
     - 358 cells
