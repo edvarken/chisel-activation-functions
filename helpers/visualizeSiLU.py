@@ -1,4 +1,3 @@
-# import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -27,7 +26,6 @@ def getSiluTableValues() -> tuple[List[float], List[float]]:
 
 def relu(x):
     return np.maximum(0, x)
-
 
 
 if __name__ == "__main__":
