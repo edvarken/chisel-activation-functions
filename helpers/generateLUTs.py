@@ -68,6 +68,55 @@ def printOrderedIndexedSiluTableInChiselSyntax(intBits=2, fracBits=4):
         print(f"\"b{silu_bf16_bits}\".U,")
 
 
+def printIndexedTanhTableExtensive(intBits=2, fracBits=4):
+    error_tolerance = 0.02
+    # heading for the table
+    print("(j        index      Tanh       Tanh_bf16         Tanh_bf16_float  error)")
+    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
+        tanh_float = round(math.tanh(j), 6)
+        j_float = f"{j:.4f}" # round to 4 decimal places
+
+        # Convert float32 to 4-byte representation (big-endian)
+        tanh_bytes = struct.pack('>f', np.float32(tanh_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        tanh_bf16_bytes = tanh_bytes[:2]
+        # Convert to bit string
+        tanh_bf16_bits = ''.join(f'{byte:08b}' for byte in tanh_bf16_bytes)
+        # Convert the bf16 back to its float representation
+        tanh_bf16_int = int(tanh_bf16_bits, 2) << 16  # Shift back to 32-bit float position
+        tanh_bf16_float = struct.unpack('>f', struct.pack('>I', tanh_bf16_int))[0]
+        # difference between silu_float and silu_bf16_float
+        diff = tanh_float - tanh_bf16_float
+        assert(abs(diff) < error_tolerance), f"Error too large: {diff:.4f} for j={j_float}, tanh_float={tanh_float}, tanh_bf16_float={tanh_bf16_float}"
+
+        frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
+        # Print everything
+        print(f"({j_float}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b}, {tanh_float:.6f}, {tanh_bf16_bits}, {tanh_bf16_float:.6f},       {diff:.4f})")
+
+
+def printOrderedIndexedTanhTableInChiselSyntax(intBits=2, fracBits=4):
+    for j in np.arange(0.0000, 4.0000, +0.0625):
+        tanh_float = round(math.tanh(j), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        tanh_bytes = struct.pack('>f', np.float32(tanh_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        tanh_bf16_bytes = tanh_bytes[:2]
+        # Convert to bit string
+        tanh_bf16_bits = ''.join(f'{byte:08b}' for byte in tanh_bf16_bytes)
+        frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
+        print(f"\"b{tanh_bf16_bits}\".U,")
+    for j in np.arange(-0.0625, -4.0, -0.0625):
+        tanh_float = round(math.tanh(j), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        tanh_bytes = struct.pack('>f', np.float32(tanh_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        tanh_bf16_bytes = tanh_bytes[:2]
+        # Convert to bit string
+        tanh_bf16_bits = ''.join(f'{byte:08b}' for byte in tanh_bf16_bytes)
+        frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
+        print(f"\"b{tanh_bf16_bits}\".U,")
+
+
 def printIndices(intBits, fracBits):
     for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
@@ -75,6 +124,8 @@ def printIndices(intBits, fracBits):
 
 if __name__ == "__main__":
     # printIndexedSiluTableExtensive()
-    printIndexedSiluTableSimple()
+    # printIndexedSiluTableSimple()
+    # printIndexedTanhTableExtensive()
+    printOrderedIndexedTanhTableInChiselSyntax()
     # printOrderedIndexedSiluTableInChiselSyntax()
     # printIndices(intBits=2, fracBits=4)

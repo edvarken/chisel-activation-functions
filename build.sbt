@@ -8,7 +8,7 @@ val chiselVersion = "6.6.0"
 
 lazy val root = (project in file("."))
   .settings(
-    name := "chisel-silu",
+    name := "chisel-activation-functions",
     libraryDependencies ++= Seq(
       "org.chipsalliance" %% "chisel" % chiselVersion,
       "org.scalatest" %% "scalatest" % "3.2.16" % "test",
@@ -23,3 +23,5 @@ lazy val root = (project in file("."))
     ),
     addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
   )
+
+// there are 2 packages within this project: silu and DyT
