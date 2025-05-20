@@ -56,7 +56,7 @@ class BF16toFPTest extends AnyFreeSpec with Matchers {
 
             for (_ <- 0 until 50) {
                 val a = scala.util.Random.nextFloat() * 14.0f - 7.0f // [0,1] * 8 - 4
-                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, but & 0xFFFF is there for clarity
                 // grab the integer and fractional parts of a
                 val intPart = math.abs(a.toInt)
                 val fracPartFloat = math.abs(a - a.toInt)
