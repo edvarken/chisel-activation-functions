@@ -16,6 +16,8 @@ class DyTUsingLUT extends Module {
         val in_a = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val in_alpha = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val out_a = Output(Bits(16.W))
+        // debugging outputs
+        val debug_out_tanh_input = Output(Bits(16.W))
     })
 
     val a = io.in_a // a must be a BigInt
@@ -24,7 +26,8 @@ class DyTUsingLUT extends Module {
     val fpmult1 = Module(new FPMult16) // 1 clock cycle latency
     fpmult1.io.a := a
     fpmult1.io.b := alpha
-    val tanh_input = fpmult1.io.res 
+    val tanh_input = fpmult1.io.res // a mantissa_rounder is used in the FPMult16 module
+    io.debug_out_tanh_input := tanh_input // debugging output
 
     val sign = tanh_input(15).asUInt
     val exp = tanh_input(14,7).asUInt
@@ -34,10 +37,16 @@ class DyTUsingLUT extends Module {
     val lut = Module(new DyTLUT) // LUT for the values between -4 and 4
     val bf16tofp = Module(new BF16toFP(2, 4)) // BF16 to FP converter, 2 bits for integer part and 4 bits for fractional part
 
-    bf16tofp.io.bf16in := tanh_input
-    val tanh_input_int = bf16tofp.io.intout 
-    val tanh_input_frac = bf16tofp.io.fracout
-    val tanh_input_sign = bf16tofp.io.signout
+    bf16tofp.io.bf16in := tanh_input // bf16tofp is purely combinatorial
+    val fixedpointIntReg = RegInit(0.U(2.W)) // register for the Int part of the FixedPoint representation
+    val fixedpointFracReg = RegInit(0.U(4.W)) // register for the Frac part of the FixedPoint representation
+    val fixedpointSignReg = RegInit(0.U(1.W)) // register for the Sign part of the FixedPoint representation
+    fixedpointIntReg := bf16tofp.io.intout 
+    fixedpointFracReg := bf16tofp.io.fracout
+    fixedpointSignReg := bf16tofp.io.signout
+    val tanh_input_int = fixedpointIntReg
+    val tanh_input_frac = fixedpointFracReg
+    val tanh_input_sign = fixedpointSignReg
     val index = Cat(tanh_input_sign, tanh_input_int, tanh_input_frac) // create the index
     lut.io.indexIn := index // LUT input
     val lutValue = lut.io.valueOut

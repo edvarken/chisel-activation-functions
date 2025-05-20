@@ -136,7 +136,7 @@ class DyTLUT extends Module {
     "b1011111101111111".U,
     "b1011111101111111".U,
     "b1011111101111111".U,
-    "b1011111101111111".U,  // index 127: 1111111 (this is -3.9375)
+    "b1011111101111111".U,  // index 127: 1111111 (this is -3.9375): should give DyT value of -0.99609375
   ))
   io.valueOut := lut(io.indexIn)
 }

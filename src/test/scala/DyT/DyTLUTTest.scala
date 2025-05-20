@@ -40,7 +40,7 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
                 val signedsamplevalue = if (sign == 1) -samplevalue else samplevalue
                 val DyTValue = (math.tanh(signedsamplevalue)).toFloat
 
-                c.clock.step(1)
+                c.clock.step(1) // should be 0cc latency since the LUT is a combinatorial circuit.
                 
                 val lutValue = java.lang.Float.intBitsToFloat((BigInt(c.io.valueOut.peek().litValue.toInt) << 16).toInt)
                 println(f"lutValue: ${lutValue}")
