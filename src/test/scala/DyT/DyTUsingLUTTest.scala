@@ -69,6 +69,54 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 assert(diff.abs < tolerance, s"Expected ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.out_a.peek().litValue.toInt, 16)}")
                 println("###########")
             }
+            // test for larger inputs, alpha still in [0,1]
+            for (_ <- 0 until 50) {
+                val alpha = scala.util.Random.nextFloat() // [0,1]
+                val alpha_upper16bits = ((floatToBigInt(alpha).toInt >> 16) & 0xFFFF).U(16.W)
+                val a = scala.util.Random.nextFloat() * 100.0f - 50.0f // [0,1]*100-50: -50 to +50
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+                c.io.in_a.poke(a_upper16bits)
+                c.io.in_alpha.poke(alpha_upper16bits)
+                c.clock.step(4) // 3cc latency due to multiplier + fixedpoint Register +  output Register
+                // seting step to 4 does not help, still test fails sometimes e.g.
+                val expected = (math.tanh(a*alpha)).toFloat // Dynamic tanh formula
+                println(f"input a-value: ${a}")
+                println(f"input alpha-value: ${alpha}")
+                println(f"tanh_input expected: ${a*alpha}")
+                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                println(f"expected exact DyT value: ${expected}")
+
+                // subtract c.io.out_a from expected to get the difference
+                val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
+                println(f"Difference: ${diff}")
+                assert(diff.abs < tolerance, s"Expected ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.out_a.peek().litValue.toInt, 16)}")
+                println("###########")
+            }
+            // test for smaller inputs, alpha still in [0,1]
+            for (_ <- 0 until 50) {
+                val alpha = scala.util.Random.nextFloat() // [0,1]
+                val alpha_upper16bits = ((floatToBigInt(alpha).toInt >> 16) & 0xFFFF).U(16.W)
+                val a = scala.util.Random.nextFloat() * 1.0f - .5f // [0,1]*1-0.5: -0.5 to +0.5
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+                c.io.in_a.poke(a_upper16bits)
+                c.io.in_alpha.poke(alpha_upper16bits)
+                c.clock.step(4) // 3cc latency due to multiplier + fixedpoint Register +  output Register
+                // seting step to 4 does not help, still test fails sometimes e.g.
+                val expected = (math.tanh(a*alpha)).toFloat // Dynamic tanh formula
+                println(f"input a-value: ${a}")
+                println(f"input alpha-value: ${alpha}")
+                println(f"tanh_input expected: ${a*alpha}")
+                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                println(f"expected exact DyT value: ${expected}")
+
+                // subtract c.io.out_a from expected to get the difference
+                val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
+                println(f"Difference: ${diff}")
+                assert(diff.abs < tolerance, s"Expected ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.out_a.peek().litValue.toInt, 16)}")
+                println("###########")
+            }
         }
     }
 }
