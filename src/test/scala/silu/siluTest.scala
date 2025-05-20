@@ -31,7 +31,7 @@ class siluTest extends AnyFreeSpec with Matchers {
                 // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 println(f"Difference: ${diff}")
-                assert(diff.abs < tolerance, s"Expected ${floatToBigIntBF16(expected).U(16.W)} but got ${c.io.out_a.peek().litValue.toInt & 0xFFFF0000}")
+                assert(diff.abs < tolerance, s"Expected ${floatToBigIntBF16(expected).U(16.W)} but got ${c.io.out_a.peek().litValue.toInt}")
                 println("###########")
             }
         }
