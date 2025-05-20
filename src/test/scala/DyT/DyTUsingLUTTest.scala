@@ -20,11 +20,11 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             // To minimize quantization impact a larger LUT size can be used. e.g. 256 instead of 128.
             // the approx+quantization errors together are larger than 0.004f! but they stay under 0.07f
             c.io.in_a.poke("b0_00000000_0000000".U(16.W)) // BF16 are the upper 16 bits of a 32-bit float
-            c.clock.step(4) // 3cc latency due to multiplier + fixedpoint Register +  output Register
+            c.clock.step(3) // 3cc latency due to multiplier + fixedpoint Register +  output Register
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
 
             c.io.in_a.poke("b1_00000000_0000000".U(16.W)) // BF16 are the upper 16 bits of a 32-bit float
-            c.clock.step(4)
+            c.clock.step(3)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
 
             // specifically test for input 2.0147734
@@ -34,7 +34,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             val a1_upper16bits = ((floatToBigInt(a1).toInt >> 16) & 0xFFFF).U(16.W)
             c.io.in_a.poke(a1_upper16bits)
             c.io.in_alpha.poke(alpha1_upper16bits)
-            c.clock.step(4)
+            c.clock.step(3)
             c.io.out_a.expect("b0_01111110_1110110".U(16.W)) // real DyT value: 0.9650566, LUT value: 0.960938
 
             val alpha2 = 0.3333f
@@ -43,7 +43,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             val a2_upper16bits = ((floatToBigInt(a2).toInt >> 16) & 0xFFFF).U(16.W)
             c.io.in_a.poke(a2_upper16bits)
             c.io.in_alpha.poke(alpha2_upper16bits)
-            c.clock.step(4)
+            c.clock.step(3)
             c.io.out_a.expect("b0_01111110_1110110".U(16.W)) // real DyT value: 0.9650566, LUT value: 0.960938
 
             for (_ <- 0 until 50) {
@@ -53,7 +53,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
                 c.io.in_a.poke(a_upper16bits)
                 c.io.in_alpha.poke(alpha_upper16bits)
-                c.clock.step(4) // 3cc latency due to multiplier + fixedpoint Register +  output Register
+                c.clock.step(3) // 3cc latency due to multiplier + at output of fixedpoint Register + output Register of DyTUsingLUT
                 // seting step to 4 does not help, still test fails sometimes e.g.
                 val expected = (math.tanh(a*alpha)).toFloat // Dynamic tanh formula
                 println(f"input a-value: ${a}")
@@ -77,7 +77,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
                 c.io.in_a.poke(a_upper16bits)
                 c.io.in_alpha.poke(alpha_upper16bits)
-                c.clock.step(4) // 3cc latency due to multiplier + fixedpoint Register +  output Register
+                c.clock.step(3) // 3cc latency due to multiplier + fixedpoint Register +  output Register
                 // seting step to 4 does not help, still test fails sometimes e.g.
                 val expected = (math.tanh(a*alpha)).toFloat // Dynamic tanh formula
                 println(f"input a-value: ${a}")
@@ -101,7 +101,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
                 c.io.in_a.poke(a_upper16bits)
                 c.io.in_alpha.poke(alpha_upper16bits)
-                c.clock.step(4) // 3cc latency due to multiplier + fixedpoint Register +  output Register
+                c.clock.step(3) // 3cc latency due to multiplier + fixedpoint Register +  output Register
                 // seting step to 4 does not help, still test fails sometimes e.g.
                 val expected = (math.tanh(a*alpha)).toFloat // Dynamic tanh formula
                 println(f"input a-value: ${a}")
