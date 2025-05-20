@@ -17,14 +17,25 @@ class FPAdd16Test extends AnyFreeSpec with Matchers {
             val usedInputsQueue = Queue[(Float, Float)]() // starts as a completely empty Queue/FIFO
             val expectedQueue = Queue(None, None, Some(0.0f)) // prepare the expected FIFO: Front -> (None, None, Some(0.0f)) <- Rear
             // we will read from this, so after the 3rd clock cycle we will have the first result of the Adder (3 cycle latency)
+            // but using a Queue, we can do every clock cycle a check, just make a expected and a inputs queue.
 
             def randFloat(): Float = {
                 scala.util.Random.nextFloat() * 10000.0f - 5000.0f
             }
 
+            def randFloatSmallerNumbers(): Float = {
+                scala.util.Random.nextFloat() * 100.0f - 50.0f
+            }
+
             for (_ <- 0 until 20) { // prepare 20 additions and their results in two queues
                 val a = randFloat()
                 val b = randFloat()
+                inputsQueue.enqueue((a, b)) // adds to the rear of the queue(=FIFO)
+                expectedQueue.enqueue(Some(floatAdd(a, b)))
+            }
+            for (_ <- 0 until 20) { // prepare 20 more additions and their results in two queues
+                val a = randFloatSmallerNumbers()
+                val b = randFloatSmallerNumbers()
                 inputsQueue.enqueue((a, b)) // adds to the rear of the queue(=FIFO)
                 expectedQueue.enqueue(Some(floatAdd(a, b)))
             }
@@ -37,29 +48,38 @@ class FPAdd16Test extends AnyFreeSpec with Matchers {
                 usedInputsQueue.enqueue((a, b))
                 val expectedOption = expectedQueue.dequeue()
 
-                if (expectedOption.nonEmpty) { // the first non empty element is Some(0.0f) (4th element in FIFO)
+                if (expectedOption.nonEmpty) { // the first non empty element is Some(0.0f) which is at 3rd place in expectedQueue FIFO
+                    // this means 3 clock cycles went by: perfect since that is the latency of the adder! "ramp-up"
+                    // so we are checking after right amount of clock cycles=latency of the adder
                     val expected = expectedOption.get
+                    val expected_exponent = math.floor(math.log(math.abs(expected))/math.log(2)).toInt
+                    val max_diff = math.pow(2, expected_exponent).toFloat // error in terms of expected's exponent, better would be to use the largest exponent of the two inputs minus 8
                     val (inputa, inputb) = usedInputsQueue.dequeue()
-                    println(s"$inputa + $inputb = $expected")
-                    println(f"A: ${floatToBigInt(inputa)}%x, B: ${floatToBigInt(inputb)}%x, HW: ${c.io.res.peek().litValue}%x, EMU: ${floatToBigInt(floatAdd(inputa, inputb))}%x")
+                    
+                    val adderOutput = java.lang.Float.intBitsToFloat((BigInt(c.io.res.peek().litValue.toInt) << 16).toInt)
+                    println(s"$inputa + $inputb = $expected, actual: $adderOutput")
 
-                    // make sure to check after right amount of clock cycles=latency of the adder!
-                    assert((c.io.res.peek().litValue.toInt & 0xFFFF0000) == (floatToBigIntBF16(expected).U(16.W).litValue.toInt & 0xFFFF0000),
-                    s"Expected ${floatToBigIntBF16(expected).U(16.W)} but got ${c.io.res.peek().litValue.toInt & 0xFFFF0000}")
+                    assert(math.abs(adderOutput - expected) <= max_diff,
+                    s"Expected ${expected} but got ${adderOutput}")
                 }
             }
 
-            while (expectedQueue.nonEmpty) {
+            while (expectedQueue.nonEmpty) { // finish up the 3 remaining expected values: 'ramp-down'
+                // so we are checking after right amount of clock cycles=latency of the adder
+                println("RAMP DOWN")
                 val expectedOption = expectedQueue.dequeue()
                 val expected = expectedOption.get
+                val expected_exponent = math.floor(math.log(math.abs(expected))/math.log(2)).toInt
+                val max_diff = math.pow(2, expected_exponent).toFloat // error in terms of expected's exponent, better would be to use the largest exponent of the two inputs minus 8
                 val (inputa, inputb) = usedInputsQueue.dequeue()
 
-                println(f"$inputa%f + $inputb%f = $expected%f")
-                println(f"A: ${floatToBigInt(inputa)}%x, B: ${floatToBigInt(inputb)}%x, HW: ${c.io.res.peek().litValue}%x, EMU: ${floatToBigInt(floatAdd(inputa, inputb))}%x")
                 c.clock.step(1)
 
-                assert((c.io.res.peek().litValue.toInt & 0xFFFF0000) == (floatToBigIntBF16(expected).U(16.W).litValue.toInt & 0xFFFF0000),
-                s"Expected ${floatToBigIntBF16(expected).U(16.W)} but got ${c.io.res.peek().litValue.toInt & 0xFFFF0000}")
+                val adderOutput = java.lang.Float.intBitsToFloat((BigInt(c.io.res.peek().litValue.toInt) << 16).toInt)
+                println(f"$inputa%f + $inputb%f = $expected%f, actual: $adderOutput")
+                
+                assert(math.abs(adderOutput - expected) <= max_diff,
+                s"Expected ${expected} but got ${adderOutput}")
             }
         }
     }
