@@ -28,7 +28,7 @@ if __name__ == "__main__":
     DyT_plot = plt.figure(figsize=(12, 8)) 
 
     plt.title("Dynamic Tanh function and approximation")
-    plt.xlabel("x") # linear x and y axes
+    plt.xlabel("α*x") # linear x and y axes
 
     # set the x and y limits
     xmin = -5
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     colors = ['k', 'r', 'blue'] # black, red, green
 
-    # real DyT
+    # real DyT: we use x to represent α*x
     x = np.linspace(xmin, xmax, 1000) # start, stop, num
     exact_DyT = np.tanh(x)
     plt.plot(x, exact_DyT, label='exact DyT', color=colors[0], linestyle='-', linewidth=2)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     approx_DyT = np.piecewise(x, [x < -4, (x >= -4) & (x < 4), x >= 4], [-1, lambda x: np.nan, lambda x: 1]) # use np.nan for -4<x<4
     plt.plot(outX, outY, '.', color=colors[1], markersize=3.6)
-    plt.plot(x, approx_DyT, label='DyT(x) = -1 for x <= -4; one of 128 look-up-table values for -4 < x < 4; +1 for x >= 4', color=colors[1], linestyle='-')  # Combine labels into one
+    plt.plot(x, approx_DyT, label='DyT(α*x) = -1 for α*x <= -4; one of 128 look-up-table values for -4 < α*x < 4; +1 for α*x >= 4', color=colors[1], linestyle='-')  # Combine labels into one
 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=3)  # Place legend below the plot
     plt.tight_layout()  # Adjust layout to prevent stretching
