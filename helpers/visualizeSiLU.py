@@ -29,7 +29,7 @@ def relu(x):
 
 
 if __name__ == "__main__":
-    roofline_plot = plt.figure(figsize=(12, 8)) 
+    silu_plot = plt.figure(figsize=(12, 8)) 
 
     plt.title("SiLU function and two approximations")
     plt.xlabel("x") # linear x and y axes
