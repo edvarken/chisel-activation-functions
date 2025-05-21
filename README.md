@@ -1,6 +1,6 @@
 # Chisel activation functions
 This repository contains hardware descriptions for the SiLU activation function and a replacement for LayerNorm called Dynamic Tanh. Both operations are found in ResNet and Transformer blocks in Diffusion models.
-Analytically: `DyT(x) = tanh($\alpha$ * x)` and `SiLU(x) = x / (1+exp(-x))`
+Analytically: `DyT(x) = tanh(α*x)` and `SiLU(x) = x / (1+exp(-x))`
 In hardware however, these functions need to be approximated.
 
 This repository contains two different hardware descriptions of the Sigmoid-Linear-Unit(SiLU) activation function, and a hardware description of Dynamic Tanh as a normalization-replacement. The inputs to the functions are all in BrainFloat16(BF16) format.
@@ -55,9 +55,19 @@ The mean squared error(MSE) is calculated using 193 linearly spaced sample point
     - 
 ## Dynamic Tanh 
 ### Visualization of Dynamic Tanh and the approximative version
+![DyTandApproximation](helpers/DyTandApproximation.png)
+### Approximative function of dynamic tanh
+The approximative function is described in `src/main/scala/silu/DyTUsingLUT.scala` and uses a piecewise function to approximate the DyT function.
+- DyT(α*x) = -1  for x <= -4
+- DyT(α*x) = one of the 128 entries in a lookup-table  for -4 < x < 4
+- DyT(α*x) = +1  for x >= 4
+
+DyTUsingLUT.scala has 3 cycles latency for the DyT approximation, but can work in a pipelined manner.
+
 ## Chisel3 tests
 Use `sbt test` to run all chisel3 tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
 Running only the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
+Running only the test for DyTUsingLUT.scala can be done with `sbt 'testOnly DyT.DyTUsingLUTTest'`
 
 ## Generate SystemVerilog RTL files
 Use `sbt run` to generate all the systemverilog files (files ending on .sv). All files are saved into a new directory called `generated/`
