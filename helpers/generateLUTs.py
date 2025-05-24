@@ -4,12 +4,14 @@ import struct
 
 def printIndexedSiluTableExtensive(intBits=2, fracBits=4):
     error_tolerance = 0.032
-    if intBits == 2 and fracBits == 4: # -4 to +4 with a step of 0.0625. 128 entries total
+    if intBits == 2 and fracBits == 4: # -4 to +4 with a step of 0.0625; 128 entries total
         error_tolerance = 0.016
-    elif intBits == 3 and fracBits == 4: # -8 to +8 with a step of 0.0625. 256 entries total
+    elif intBits == 2 and fracBits == 5: # -4 to +4 with a step of 0.03125; 256 entries total
+        error_tolerance = 0.016
+    elif intBits == 3 and fracBits == 4: # -8 to +8 with a step of 0.0625; 256 entries total
         error_tolerance = 0.032
-    elif intBits == 3 and fracBits == 5: # -8 to +8 with a step of 0.03125. 512 entries total
-        error_tolerance = 0.0312 # TODO: check this value
+    elif intBits == 3 and fracBits == 5: # -8 to +8 with a step of 0.03125; 512 entries total
+        error_tolerance = 0.0312
 
     step = float(pow(2, -fracBits))
     max = float(pow(2, intBits))
@@ -146,9 +148,9 @@ def printIndices(intBits=2, fracBits=4):
         print(f"({j}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b})")
 
 if __name__ == "__main__":
-    # printIndexedSiluTableExtensive(intBits=3, fracBits=5)
+    # printIndexedSiluTableExtensive(intBits=2, fracBits=5)
     # printIndexedSiluTableSimple()
-    printOrderedIndexedSiluTableInChiselSyntax(intBits=3, fracBits=5)
+    printOrderedIndexedSiluTableInChiselSyntax(intBits=2, fracBits=5)
 
     # printIndexedTanhTableExtensive()
     # printOrderedIndexedTanhTableInChiselSyntax()
