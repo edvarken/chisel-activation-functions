@@ -59,10 +59,27 @@ class siluUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
 /**
  * Generate Verilog sources and save it in generated/siluUsingLUT.v
  */
-object siluUsingLUT extends App {
+object siluUsingLUTMain extends App {
     ChiselStage.emitSystemVerilogFile(
-        new siluUsingLUT(intBits = 2, fracBits = 4), // Change intBits and fracBits as needed
+        new siluUsingLUT(intBits = 3, fracBits = 5), // Change intBits and fracBits as needed
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
         args = Array("--target-dir", "generated")
     )
 }
+// object siluUsingLUTMain extends App {
+//     // create combos (intBits,fracBits) = (2,4), (2,5), (3,4), (3,5)
+//     val intBitsList = Seq(2, 3) 
+//     val fracBitsList = Seq(4, 5)
+
+//     for {
+//         intBits <- intBitsList
+//         fracBits <- fracBitsList
+//     } {
+//         val fileName = s"generated/siluUsingLUT_int${intBits}_frac${fracBits}.v"
+//         ChiselStage.emitSystemVerilogFile(
+//         new siluUsingLUT(intBits = intBits, fracBits = fracBits),
+//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+//         args = Array("--target-dir", "generated", "--output-file", fileName)
+//         )
+//     }
+// }
