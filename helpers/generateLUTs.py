@@ -3,11 +3,14 @@ import numpy as np
 import struct
 
 def printIndexedSiluTableExtensive(intBits=2, fracBits=4):
-    error_tolerance = 0.02
+    error_tolerance = 0.032
+    step = float(pow(2, -fracBits))
+    max = float(pow(2, intBits))
+    min = -max + step
     # heading for the table
     print("(j        index      silu       silu_bf16         silu_bf16_float  error)")
-    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
-        silu_float = round(j/(1+math.exp(-j)), 6)
+    for j in np.arange(min, max, step): # from -3.9375 up to 4.0 with a step of 0.0625 for intBits=2 and fracBits=4
+        silu_float = round(j/(1+math.exp(-j)), (fracBits+intBits))
         j_float = f"{j:.4f}" # round to 4 decimal places
 
         # Convert float32 to 4-byte representation (big-endian)
@@ -27,26 +30,29 @@ def printIndexedSiluTableExtensive(intBits=2, fracBits=4):
         # Print everything
         print(f"({j_float}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b}, {silu_float:.6f}, {silu_bf16_bits}, {silu_bf16_float:.6f},       {diff:.4f})")
 
+
 def printIndexedSiluTableSimple(intBits=2, fracBits=4):
+    step = float(pow(2, -fracBits))
+    max = float(pow(2, intBits))
+    min = -max + step
     # heading for the table
     print("(index      silu_bf16)")
-    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375 up to +3.9375
+    for j in np.arange(min, max, step): # -3.9375 up to +3.9375
         silu_float = round(j/(1+math.exp(-j)), 6)
-
         # Convert float32 to 4-byte representation (big-endian)
         silu_bytes = struct.pack('>f', np.float32(silu_float))
         # Take the first 2 bytes (most significant bits) for BF16
         silu_bf16_bytes = silu_bytes[:2]
         # Convert to bit string
         silu_bf16_bits = ''.join(f'{byte:08b}' for byte in silu_bf16_bytes)
-
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
-
         print(f"({int(j < 0)}{int(abs(j)):0{intBits}b}{frac_part:0{fracBits}b}, {silu_bf16_bits})")
 
 
 def printOrderedIndexedSiluTableInChiselSyntax(intBits=2, fracBits=4):
-    for j in np.arange(0.0000, 4.0000, +0.0625):
+    step = float(pow(2, -fracBits))
+    max = float(pow(2, intBits))
+    for j in np.arange(0.0000, max, +step):
         silu_float = round(j/(1+math.exp(-j)), 6)
         # Convert float32 to 4-byte representation (big-endian)
         silu_bytes = struct.pack('>f', np.float32(silu_float))
@@ -56,7 +62,8 @@ def printOrderedIndexedSiluTableInChiselSyntax(intBits=2, fracBits=4):
         silu_bf16_bits = ''.join(f'{byte:08b}' for byte in silu_bf16_bytes)
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
         print(f"\"b{silu_bf16_bits}\".U,")
-    for j in np.arange(-0.0625, -4.0, -0.0625):
+    print("\"b0000000000000000\".U,") # add zero entry for -0.0
+    for j in np.arange(-step, -max, -step):
         silu_float = round(j/(1+math.exp(-j)), 6)
         # Convert float32 to 4-byte representation (big-endian)
         silu_bytes = struct.pack('>f', np.float32(silu_float))
@@ -70,9 +77,12 @@ def printOrderedIndexedSiluTableInChiselSyntax(intBits=2, fracBits=4):
 
 def printIndexedTanhTableExtensive(intBits=2, fracBits=4):
     error_tolerance = 0.02
+    step = float(pow(2, -fracBits))
+    max = float(pow(2, intBits))
+    min = -max + step
     # heading for the table
     print("(j        index      Tanh       Tanh_bf16         Tanh_bf16_float  error)")
-    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
+    for j in np.arange(min, max, step): # -3.9375
         tanh_float = round(math.tanh(j), 6)
         j_float = f"{j:.4f}" # round to 4 decimal places
 
@@ -95,7 +105,9 @@ def printIndexedTanhTableExtensive(intBits=2, fracBits=4):
 
 
 def printOrderedIndexedTanhTableInChiselSyntax(intBits=2, fracBits=4):
-    for j in np.arange(0.0000, 4.0000, +0.0625):
+    step = float(pow(2, -fracBits))
+    max = float(pow(2, intBits))
+    for j in np.arange(0.0000, max, +step):
         tanh_float = round(math.tanh(j), 6)
         # Convert float32 to 4-byte representation (big-endian)
         tanh_bytes = struct.pack('>f', np.float32(tanh_float))
@@ -105,7 +117,8 @@ def printOrderedIndexedTanhTableInChiselSyntax(intBits=2, fracBits=4):
         tanh_bf16_bits = ''.join(f'{byte:08b}' for byte in tanh_bf16_bytes)
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
         print(f"\"b{tanh_bf16_bits}\".U,")
-    for j in np.arange(-0.0625, -4.0, -0.0625):
+    print("\"b0000000000000000\".U,") # add zero entry for -0.0
+    for j in np.arange(-step, -max, -step):
         tanh_float = round(math.tanh(j), 6)
         # Convert float32 to 4-byte representation (big-endian)
         tanh_bytes = struct.pack('>f', np.float32(tanh_float))
@@ -117,15 +130,20 @@ def printOrderedIndexedTanhTableInChiselSyntax(intBits=2, fracBits=4):
         print(f"\"b{tanh_bf16_bits}\".U,")
 
 
-def printIndices(intBits, fracBits):
-    for j in np.arange(-3.9375, 4.0, 0.0625): # -3.9375
+def printIndices(intBits=2, fracBits=4):
+    step = float(pow(2, -fracBits))
+    max = float(pow(2, intBits))
+    min = -max + step
+    for j in np.arange(min, max, +step): # -3.9375 to 4.0 with a step of 0.0625 for intBits=2 and fracBits=4
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
         print(f"({j}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b})")
 
 if __name__ == "__main__":
-    # printIndexedSiluTableExtensive()
+    printIndexedSiluTableExtensive(intBits=3, fracBits=4)
     # printIndexedSiluTableSimple()
+    # printOrderedIndexedSiluTableInChiselSyntax(intBits=3, fracBits=4)
+
     # printIndexedTanhTableExtensive()
-    printOrderedIndexedTanhTableInChiselSyntax()
-    # printOrderedIndexedSiluTableInChiselSyntax()
+    # printOrderedIndexedTanhTableInChiselSyntax()
+    
     # printIndices(intBits=2, fracBits=4)

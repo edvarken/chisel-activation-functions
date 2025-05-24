@@ -5,11 +5,13 @@ import chisel3.util._ // needed for Cat()
 import _root_.circt.stage.ChiselStage
 
 /**
-  * This is a Chisel implementation that uses a Lookup Table to approximate the SiLU activation function between -4 and +4
-  * Below -4 and above +4, the function returns 0 and the input itself respectively.
+  * This is a Chisel implementation that uses a Lookup Table to approximate the SiLU activation function within a certain range
+  * If intBits=2 and fracBits=4, the range is -4 to +4.
+  * If intBits=3 and fracBits=4, the range is -8 to +8.
+  * For smaller and large numbers outside the range, the function returns 0 or the input itself respectively.
   * The implementation only supports BF16 floating point representation
   */
-class siluUsingLUT extends Module {
+class siluUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
     val io = IO(new Bundle {
         val in_a = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val out_a = Output(Bits(16.W))
@@ -21,8 +23,8 @@ class siluUsingLUT extends Module {
     val actual_exp = (exp.asSInt - 127.S(8.W)).asSInt // actual_exp can be negative!
     val mantissa = a(6,0).asUInt
 
-    val lut = Module(new siluLUT) // LUT for the values between -4 and 4
-    val bf16tofp = Module(new BF16toFP(2, 4)) // BF16 to FP converter, 2 bits for integer part and 4 bits for fractional part
+    val lut = Module(new siluLUT(intBits, fracBits)) // LUT for the values between -4 and 4 (or -8 and 8)
+    val bf16tofp = Module(new BF16toFP(intBits, fracBits)) // BF16 to Fixed Point converter, 2 bits for integer part and 4 bits for fractional part
 
     bf16tofp.io.bf16in := a
     val a_int = bf16tofp.io.intout 
@@ -36,18 +38,18 @@ class siluUsingLUT extends Module {
     when (sign === 1.U) { // in_a <= -0
         when (a === "b1_00000000_0000000".U) { // in_a = -0
             outputReg := 0.U
-        }.elsewhen (actual_exp >= 2.S) { // in_a <= -4
+        }.elsewhen (actual_exp >= intBits.S) { // if intBits=2: in_a <= -4; if intBits=3: in_a <= -8
             outputReg := 0.U
-        }.otherwise { // -4 < in_a <= -0
+        }.otherwise { // if intBits=2: -4 < in_a <= -0; if intBits=3: -8 < in_a <= -0
             outputReg := lutValue
         }
 
     }.otherwise { // in_a > 0
         when (a === "b0_00000000_0000000".U) { // in_a = +0
             outputReg := 0.U
-        }.elsewhen (actual_exp >= 2.S) { // in_a >= 4
+        }.elsewhen (actual_exp >= intBits.S) { // if intBits=2: in_a >= 4; if intBits=3: in_a >= 8
             outputReg := a // SiLU(a) = a
-        }.otherwise { // 0 < in_a < 4
+        }.otherwise { // if intBits=2: 0 < in_a < 4; if intBits=3: 0 < in_a < 8
             outputReg := lutValue
         }
     }
@@ -59,7 +61,7 @@ class siluUsingLUT extends Module {
  */
 object siluUsingLUT extends App {
     ChiselStage.emitSystemVerilogFile(
-        new siluUsingLUT,
+        new siluUsingLUT(intBits = 2, fracBits = 4), // Change intBits and fracBits as needed
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
         args = Array("--target-dir", "generated")
     )

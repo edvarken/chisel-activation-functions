@@ -30,15 +30,14 @@ class BF16toFP(val intBits: Int = 2, val fracBits: Int = 4) extends Module { // 
     // calculate needed shift
     val expVal = exponent.asSInt - bias // real exponent
     val shift = Wire(SInt(6.W))
-    shift := expVal - (7.S - fracBits.asSInt) // 7 - 4(fracBits) = 3, coming from an 8bit normalizedMantissa, we need to shift right by 3 places if e.g. expval=0
+    shift := expVal - (7.S - fracBits.asSInt) // 7 - 4(fracBits) = 3, coming from an 8bit normalizedMantissa, we need to shift right e.g. by 3 places when expval=0
 
     // Value without sign
     val unsignedValue = Wire(UInt((intBits + fracBits).W)) // Bits to hold shifted mantissa
 
     // shift mantissa
-    // the positive shift never happens when we use this module in siluUsingLUT.scala 
-    // since in siluUsingLUT.scala we only use this module for inputs that have expVals <= 1 (bf16 inputs in the range (-4, 4)).
-    // anything outside that range doesn't use the LUT for the silu and thus does not need this conversion module to get the FP format.
+    // the positive shift never happens for bf16 inputs in the range (-4, 4), since then expVal <= 1, so shift is always <= -2, and this module is not used outside that range.
+    // For bf16 inputs in the range (-8, 8), the expVal <= 2 (using 4 fracBits), so the shift is still always <= -1.
     when(shift >= 0.S) { // exp >= (127+3)
       unsignedValue := normalizedMantissa << shift.asUInt // arithmetic shift left
     }.otherwise { // exp < (127+3)
