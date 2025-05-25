@@ -11,28 +11,35 @@ It makes use of the Chisel3 framework to describe, test and generate the hardwar
 ![SiluFunctionandApproximations](helpers/SiLUand2ApproxFunctions.png)
 #### Version 1
 Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
-For this an Adder and two Multipliers are needed. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation.
-
-(The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module supports only BF16 numbers)
+For this an Adder and two Multipliers are needed. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
+(The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module itself only supports BF16 numbers)
 
 #### Version 2
-Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate the SiLU function.
-- SiLU2(x) = 0  for x <= -4
-- SiLU2(x) = one of the 128 entries in a lookup-table  for -4 < x < 4
-- SiLU2(x) = x itself  for x >= 4
+Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate the SiLU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index, which consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below:
+| Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
+|-----------|----------------|-------------|-------------------------------------------|
+| SiLU2a(x) | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
+| SiLU2b(x) | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
+| SiLU2c(x) | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| SiLU2d(x) | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
 
-siluUsingLUT.scala has only 1 cycle latency for the SiLU approximation
+For x values below the LUT range the output is `SiLU2(x)=0`, for x values above the LUT range the output equals the input `SiLU2(x)=x`.
 
-### Comparing the two SiLU versions
-For both a clock period of 5ns=5000ps is used. Synthesized in TSMC 65nm, the wiring net area is neglected.
+`siluUsingLUT.scala` has only 1 cycle latency for the SiLU approximation.
+
+### Comparing the SiLU versions
+For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
 The mean squared error(MSE) is calculated using 193 linearly spaced sample points in the range -6 to 6. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
+
+| Function  | MSE            | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.2) (um^2) |
+|-----------|----------------|-------|------------------|--------------|--------------------------|---------------------------------------------|
+| SiLU1(x)  | 0.004861       | 629   | 1755.04          | 0.633941     | 2263                     | 351.01                                      |
+| SiLU2a(x) | 0.000579       | 358   | 599.48           | 0.114480     | 1002                     | 119.90                                      | 
+| SiLU2b(x) | /              | 582   | 924.00           | 0.133114     | /                        | 184.80                                      | 
+| SiLU2c(x) | /              | 579   | 908.040          | 0.132313     | /                        | 181.61                                      | 
+| SiLU2d(x) | /              | 979   | 1472.520         | 0.171142     | /                        | 294.50                                      | 
+
 #### Version 1: silu.scala
-- SiLU1(x) fitting accuracy:
-    - Mean Squared Error(MSE): 0.004861
-    - Keep in mind the inputs are in Brainfloat16. This implementation calculates x*relu6(x+3) / 6
-- Area: 
-    - 629 cells
-    - 1755.04 um^2
 - Power: 6.33941e-04 Watt?
     - 59.61% in registers, 36.61% in logic, 3.79% in clock
     - 84.73% is internal, 15.18% is switching, 0.10% is leakage
@@ -40,19 +47,49 @@ The mean squared error(MSE) is calculated using 193 linearly spaced sample point
     - slack=2630ps(higher is better)
     - critical path delay=2263ps
 #### Version 2: siluUsingLUT.scala
-- SiLU2(x) fitting accuracy:
+- SiLU2a(x) fitting accuracy:
     - Mean Squared Error(MSE): 0.000579
     - keep in mind this implementation uses a LUT with 128 entries to approximate SiLU for all BrainFloat16 inputs between -4 and +4.
-- Area: 
-    - 358 cells
-    - 599.48 um^2
 - Power: 1.14480e-04 Watt?
     - 58.75% in registers, 38.08% in logic, 3.17% in clock
     - 79.67% is internal, 20.19% is switching, 0.15% is leakage
 - Timing path type: Input->Register,
     - slack=3797ps(higher is better)
     - critical path delay=1002ps
-    - 
+
+===
+- SiLU2b(x) fitting accuracy:
+    - Mean Squared Error(MSE): ?
+    - keep in mind this implementation uses a LUT with 256 entries to approximate SiLU for all BrainFloat16 inputs between -4 and +4.
+- Power: ?
+    - ?% in registers, ?% in logic, ?% in clock
+    - ?% is internal, ?% is switching, ?% is leakage
+- Timing path type: Input->Register,
+    - slack=?ps(higher is better)
+    - critical path delay=?ps
+
+===
+- SiLU2c(x) fitting accuracy:
+    - Mean Squared Error(MSE): ?
+    - keep in mind this implementation uses a LUT with 256 entries to approximate SiLU for all BrainFloat16 inputs between -8 and +8.
+- Power: ?
+    - ?% in registers, ?% in logic, ?% in clock
+    - ?% is internal, ?% is switching, ?% is leakage
+- Timing path type: Input->Register,
+    - slack=?ps(higher is better)
+    - critical path delay=?ps
+
+===
+- SiLU2d(x) fitting accuracy:
+    - Mean Squared Error(MSE): ?
+    - keep in mind this implementation uses a LUT with 512 entries to approximate SiLU for all BrainFloat16 inputs between -8 and +8.
+- Power: ?
+    - ?% in registers, ?% in logic, ?% in clock
+    - ?% is internal, ?% is switching, ?% is leakage
+- Timing path type: Input->Register,
+    - slack=?ps(higher is better)
+    - critical path delay=?ps
+
 ## Dynamic Tanh 
 ### Visualization of Dynamic Tanh and the approximative version
 ![DyTandApproximation](helpers/DyTandApproximation.png)
