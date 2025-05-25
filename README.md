@@ -29,15 +29,15 @@ For x values below the LUT range the output is `SiLU2(x)=0`, for x values above 
 
 ### Comparing the SiLU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) is calculated using 193 linearly spaced sample points in the range -6 to 6. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
+The mean squared error(MSE) is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
 
 | Function  | MSE            | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.2) (um^2) |
 |-----------|----------------|-------|------------------|--------------|--------------------------|---------------------------------------------|
 | SiLU1(x)  | 0.004861       | 629   | 1755.04          | 0.633941     | 2263                     | 351.01                                      |
-| SiLU2a(x) | 0.000579       | 358   | 599.48           | 0.114480     | 1002                     | 119.90                                      | 
-| SiLU2b(x) | /              | 582   | 924.00           | 0.133114     | 1214                     | 184.80                                      | 
-| SiLU2c(x) | /              | 579   | 908.040          | 0.132313     | 1048                     | 181.61                                      | 
-| SiLU2d(x) | /              | 979   | 1472.520         | 0.171142     | 1137                     | 294.50                                      | 
+| SiLU2a(x) | 0.0003603      | 358   | 599.48           | 0.114480     | 1002                     | 119.90                                      | 
+| SiLU2b(x) | 0.0003519      | 582   | 924.00           | 0.133114     | 1214                     | 184.80                                      | 
+| SiLU2c(x) | 0.0000949      | 579   | 908.040          | 0.132313     | 1048                     | 181.61                                      | 
+| SiLU2d(x) | 0.0000938      | 979   | 1472.520         | 0.171142     | 1137                     | 294.50                                      | 
 
 #### Version 1: silu.scala
 - Power: 6.33941e-04 Watt?
