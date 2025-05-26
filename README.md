@@ -39,56 +39,8 @@ The mean squared error(MSE) is calculated using linearly spaced sample points in
 | SiLU2c(x) | 0.0000949      | 579   | 908.040          | 0.132313     | 1048                     | 181.61                                      | 
 | SiLU2d(x) | 0.0000938      | 979   | 1472.520         | 0.171142     | 1137                     | 294.50                                      | 
 
-#### Version 1: silu.scala
-- Power: 6.33941e-04 Watt?
-    - 59.61% in registers, 36.61% in logic, 3.79% in clock
-    - 84.73% is internal, 15.18% is switching, 0.10% is leakage
-- Timing path type: Register->Register
-    - slack=2630ps(higher is better)
-    - critical path delay=2263ps
-#### Version 2: siluUsingLUT.scala
-- SiLU2a(x) fitting accuracy:
-    - Mean Squared Error(MSE): 0.000579
-    - keep in mind this implementation uses a LUT with 128 entries to approximate SiLU for all BrainFloat16 inputs between -4 and +4.
-- Power: 1.14480e-04 Watt?
-    - 58.75% in registers, 38.08% in logic, 3.17% in clock
-    - 79.67% is internal, 20.19% is switching, 0.15% is leakage
-- Timing path type: Input->Register,
-    - slack=3797ps(higher is better)
-    - critical path delay=1002ps
-
-===
-- SiLU2b(x) fitting accuracy:
-    - Mean Squared Error(MSE): ?
-    - keep in mind this implementation uses a LUT with 256 entries to approximate SiLU for all BrainFloat16 inputs between -4 and +4.
-- Power: ?
-    - ?% in registers, ?% in logic, ?% in clock
-    - ?% is internal, ?% is switching, ?% is leakage
-- Timing path type: Input->Register,
-    - slack=?ps(higher is better)
-    - critical path delay=?ps
-
-===
-- SiLU2c(x) fitting accuracy:
-    - Mean Squared Error(MSE): ?
-    - keep in mind this implementation uses a LUT with 256 entries to approximate SiLU for all BrainFloat16 inputs between -8 and +8.
-- Power: ?
-    - ?% in registers, ?% in logic, ?% in clock
-    - ?% is internal, ?% is switching, ?% is leakage
-- Timing path type: Input->Register,
-    - slack=?ps(higher is better)
-    - critical path delay=?ps
-
-===
-- SiLU2d(x) fitting accuracy:
-    - Mean Squared Error(MSE): ?
-    - keep in mind this implementation uses a LUT with 512 entries to approximate SiLU for all BrainFloat16 inputs between -8 and +8.
-- Power: ?
-    - ?% in registers, ?% in logic, ?% in clock
-    - ?% is internal, ?% is switching, ?% is leakage
-- Timing path type: Input->Register,
-    - slack=?ps(higher is better)
-    - critical path delay=?ps
+### Fitting the SiLU hardware module into the Gemmini accelerator platform
+This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, 16 SiLU hardware units in parallel are needed, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
 
 ## Dynamic Tanh 
 ### Visualization of Dynamic Tanh and the approximative version
