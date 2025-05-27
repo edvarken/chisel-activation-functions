@@ -57,6 +57,7 @@ DyTUsingLUT.scala has 3 cycles latency for the DyT approximation, but can work i
 Use `sbt test` to run all chisel3 tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
 Running only the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
 Running only the test for DyTUsingLUT.scala can be done with `sbt 'testOnly DyT.DyTUsingLUTTest'`
+Use `sbt "testOnly hardfloat.DivSqrtRecFN_smallTest -- -z compute"` to run the test for the raw 16bit floating point division.
 
 ## Generate SystemVerilog RTL files
 Use `sbt run` to generate all the systemverilog files (files ending on .sv). All files are saved into a new directory called `generated/`
