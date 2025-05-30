@@ -78,7 +78,7 @@ object FloatUtils {
 
     def getExpMantWidths(n: Int): (Int, Int) = {
         n match {
-            case 16 => (8, 7) // BF16
+            case 16 => (8, 7) // BF16 = FPAdd16ALT
             case 32 => (8, 23)
             case 64 => (11, 52)
         }

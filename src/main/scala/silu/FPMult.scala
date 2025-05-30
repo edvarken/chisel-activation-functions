@@ -69,7 +69,7 @@ class FPMult(val n: Int) extends Module { // single-cycle pipeline latency
                   stage2_mantissa.asUInt)
 }
 
-class FPMult16 extends FPMult(16) {} // BF16
+class FPMult16ALT extends FPMult(16) {} // BF16
 class FPMult32 extends FPMult(32) {}
 class FPMult64 extends FPMult(64) {}
 

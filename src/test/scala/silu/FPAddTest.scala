@@ -11,8 +11,8 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
 import scala.collection.mutable.Queue
 
 class FPAdd16Test extends AnyFreeSpec with Matchers {
-    "FPAdd16 should add BF16 numbers correctly" in {
-        simulate(new FPAdd16) { c =>
+    "FPMult16ALT should add BF16 numbers correctly" in {
+        simulate(new FPAdd16ALT) { c =>
             val inputsQueue = Queue((0.0f, 0.0f)) // starts with an initial tuple (0.0f, 0.0f)
             val usedInputsQueue = Queue[(Float, Float)]() // starts as a completely empty Queue/FIFO
             val expectedQueue = Queue(None, None, Some(0.0f)) // prepare the expected FIFO: Front -> (None, None, Some(0.0f)) <- Rear

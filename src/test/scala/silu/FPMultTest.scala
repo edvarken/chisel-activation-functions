@@ -10,8 +10,8 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
                    floatAdd, doubleAdd}
 
 class FPMult16Test extends AnyFreeSpec with Matchers {
-    "FPMult16 should correctly multiply floating-point numbers" in {
-        simulate(new FPMult16) { c =>
+    "FPMult16ALT should correctly multiply BF16 numbers" in {
+        simulate(new FPMult16ALT) { c =>
 
             def toBinary(i: Int, digits: Int = 16) =
                 String.format("%" + digits + "s", i.toBinaryString).replace(' ', '0')

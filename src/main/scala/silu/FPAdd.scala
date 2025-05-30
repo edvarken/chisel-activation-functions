@@ -247,7 +247,7 @@ class FPAdd(val n: Int) extends Module { // Adder with three cycle pipeline late
     io.res := Cat(stage3.io.sign_out, stage4.io.exp_out, stage4.io.mant_out)
 }
 
-class FPAdd16 extends FPAdd(16) {} // BF16
+class FPAdd16ALT extends FPAdd(16) {} // BF16
 class FPAdd32 extends FPAdd(32) {}
 class FPAdd64 extends FPAdd(64) {}
 

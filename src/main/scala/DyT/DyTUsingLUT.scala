@@ -3,7 +3,7 @@ import chisel3._
 import chisel3.util._ // needed for Cat()
 // _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
 import _root_.circt.stage.ChiselStage
-import silu.FPMult16
+import silu.FPMult16ALT
 import silu.BF16toFP
 
 /**
@@ -23,10 +23,10 @@ class DyTUsingLUT extends Module {
     val a = io.in_a // a must be a BigInt
     val alpha = io.in_alpha // trainable 'weight' value, different for each pixel of a 'layernorm replacement'
     // multiply alpha * a
-    val fpmult1 = Module(new FPMult16) // 1 clock cycle latency
+    val fpmult1 = Module(new FPMult16ALT) // 1 clock cycle latency
     fpmult1.io.a := a
     fpmult1.io.b := alpha
-    val tanh_input = fpmult1.io.res // a mantissa_rounder is used in the FPMult16 module
+    val tanh_input = fpmult1.io.res // a mantissa_rounder is used in the FPMult16ALT module
     io.debug_out_tanh_input := tanh_input // debugging output
 
     val sign = tanh_input(15).asUInt

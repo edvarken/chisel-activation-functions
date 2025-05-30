@@ -509,7 +509,7 @@ class
 *----------------------------------------------------------------------------*/
 
 class
-    DivSqrtRecFN_small(expWidth: Int, sigWidth: Int, options: Int) // is sigWidth with or without the implicit leading 1 of the mantissa?
+    DivSqrtRecFN_small(expWidth: Int, sigWidth: Int, options: Int) // is sigWidth with or without the implicit leading 1 of the mantissa? WITH! so use 8,8 for BF16
     extends Module
 {
     // override def desiredName = s"DivSqrtRecFN_small_e${expWidth}_s${sigWidth}"
