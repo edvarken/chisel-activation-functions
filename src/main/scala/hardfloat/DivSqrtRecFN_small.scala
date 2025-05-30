@@ -510,7 +510,7 @@ class
 
 class
     DivSqrtRecFN_small(expWidth: Int, sigWidth: Int, options: Int) // is sigWidth with or without the implicit leading 1 of the mantissa? WITH! so use 8,8 for BF16
-    extends Module
+    extends Module // has a max latency of 11 cc's, often 8 or 9 cc's, sometimes 0 cc
 {
     // override def desiredName = s"DivSqrtRecFN_small_e${expWidth}_s${sigWidth}"
     val io = IO(new Bundle {
@@ -535,7 +535,7 @@ class
     //------------------------------------------------------------------------
     //------------------------------------------------------------------------
     val divSqrtRecFNToRaw =
-        Module(new DivSqrtRecFNToRaw_small(expWidth, sigWidth, options))
+        Module(new DivSqrtRecFNToRaw_small(expWidth, sigWidth, options)) // def round_max = "b011".U(3.W) = 3
 
     io.inReady := divSqrtRecFNToRaw.io.inReady
     divSqrtRecFNToRaw.io.inValid      := io.inValid

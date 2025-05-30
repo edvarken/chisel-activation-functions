@@ -42,7 +42,7 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 println(s"rawOutValid_sqrt: ${c.io.outValid_sqrt.peek().litToBoolean}")
             }
             assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // The assertion passes if this value is true.
-
+            println(s"waited cycles: $waited") // should be 13?
             var result = c.io.out.peek().litValue // Get the result as a BigInt
             if (verbose) {
                 println(f"Result: ${toBinary(result.toInt, 16)}") // recoded format!, since mantissa has an extra m.s. bit for special cases, ignore it for now
@@ -81,7 +81,7 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 println(s"rawOutValid_sqrt: ${c.io.outValid_sqrt.peek().litToBoolean}")
             }
             assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // if assertion fails it prints its message.
-
+            println(s"waited cycles: $waited") // should be 13?
             result = c.io.out.peek().litValue 
             
             if (verbose) {
@@ -131,7 +131,7 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 println(s"rawOutValid_sqrt: ${c.io.outValid_sqrt.peek().litToBoolean}")
             }
             assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // The assertion passes if this value is true.
-
+            println(s"waited cycles: $waited") // should be 13?
             var result = c.io.out.peek().litValue
             if (verbose) {
                 println(f"Result: ${toBinary(result.toInt, 16)}")
@@ -183,6 +183,7 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                     waited += 1
                 }
                 assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // if assertion fails it prints its message.
+                println(s"waited cycles: $waited") // should be 13?
                 result = c.io.out.peek().litValue 
                 if (verbose) {
                     println(f"Result: ${toBinary(result.toInt, 16)}")
