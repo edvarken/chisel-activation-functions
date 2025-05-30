@@ -18,8 +18,10 @@ import hardfloat.DivSqrtRecFN_small
   * alpha = 1 / sqrt(2*ln(G)) = (1 / sqrt(2*ln(32)))
   * The implementation only supports BF16 numbers
   * GroupNorm happens on 10,20 or 40 elements at a time, so we need channels to be ready for that after a CONV3 or resadd.
-  * total latency = log2(N) * 3 + 1 + 3 + 3 + 13 + 1 = log2(N) * 3 + 21 cc = log2(C/G) * 3 + 21 cc
-  * e.g. for C = 320, N = 10, total latency = 3 * ceil(log2(10)) + 1 + 3 + 3 + 11 + 1 = 3 * ceil(3.3219)+19 = 12+19=31 cc
+  * TOTAL LATENCY = 3 * ceil(log2(N)) + 1(mult) + 1(reg) + 3(sub) + 11(div) + 1(mult)
+  * For C = 320, N = 10, total latency = 3 * ceil(log2(10))+17 = 12+17=29 cc
+  * For C = 640, N = 20, total latency = 3 * ceil(log2(20))+17 = 15+17=32 cc, however it is 31cc only, why?
+  * For C = 1280, N = 40, total latency = 3 * ceil(log2(40))+17 = 18+17=35 cc, however it is ?cc
   */
 class rangeGN(val C: Int) extends Module {
   val G = 32
