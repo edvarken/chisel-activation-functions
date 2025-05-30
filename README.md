@@ -1,20 +1,20 @@
 # Chisel activation functions
-This repository contains hardware descriptions for the SiLU activation function and a replacement for LayerNorm called Dynamic Tanh. Both operations are found in ResNet and Transformer blocks in Diffusion models.
-Analytically: `DyT(x) = tanh(α*x)` and `SiLU(x) = x / (1+exp(-x))`
+This repository contains hardware descriptions for the SiLU activation function. It also contains a replacement for LayerNorm called Dynamic Tanh. Finally it contains an implementation of GroupNorm called range GroupNorm. All three operations are found in ResNet and Transformer blocks in Diffusion models.
+Analytically: `SiLU(x) = x / (1+exp(-x))` and `DyT(x) = tanh(α*x)` and `rangeGN(x_i) = (x_i - mean)/(alpha*range)`
 In hardware however, these functions need to be approximated.
 
-This repository contains two different hardware descriptions of the Sigmoid-Linear-Unit(SiLU) activation function, and a hardware description of Dynamic Tanh as a normalization-replacement. The inputs to the functions are all in BrainFloat16(BF16) format.
+This repository contains two different hardware descriptions of the Sigmoid-Linear-Unit(SiLU) activation function, a hardware description of Dynamic Tanh as a normalization-replacement, and an approximation for GroupNorm called range GroupNorm. The inputs and outputs are all in BrainFloat16(BF16) format.
 
 It makes use of the Chisel3 framework to describe, test and generate the hardware.
 ## SiLU 
 ### Visualization of SiLU and the two approximative versions
 ![SiluFunctionandApproximations](helpers/SiLUand2ApproxFunctions.png)
-#### Version 1
+### Version 1
 Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
 For this an Adder and two Multipliers are needed. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
 (The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module itself only supports BF16 numbers)
 
-#### Version 2
+### Version 2
 Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate the SiLU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index, which consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below:
 | Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
 |-----------|----------------|-------------|-------------------------------------------|
@@ -45,7 +45,7 @@ This SiLU unit must fit into the Gemmini accelerator platform. This means the Si
 ## Dynamic Tanh 
 ### Visualization of Dynamic Tanh and the approximative version
 ![DyTandApproximation](helpers/DyTandApproximation.png)
-### Approximative function of dynamic tanh
+### Approximative function for dynamic tanh
 The approximative function is described in `src/main/scala/silu/DyTUsingLUT.scala` and uses a piecewise function to approximate the DyT function.
 - DyT(α*x) = -1  for x <= -4
 - DyT(α*x) = one of the 128 entries in a lookup-table  for -4 < x < 4
@@ -53,11 +53,18 @@ The approximative function is described in `src/main/scala/silu/DyTUsingLUT.scal
 
 DyTUsingLUT.scala has 3 cycles latency for the DyT approximation, but can work in a pipelined manner.
 
+## range GroupNorm
+### Visualization of GroupNorm and the approximation
+TODO
+### Approximative function for GroupNorm: rangeGN
+The approximative function is described in `src/main/scala/GroupNorm/rangeGN.scala` and uses a simplified calculation to approximate the GroupNorm normalization function.
+
 ## Chisel3 tests
 Use `sbt test` to run all chisel3 tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
 Running only the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
 Running only the test for DyTUsingLUT.scala can be done with `sbt 'testOnly DyT.DyTUsingLUTTest'`
-Use `sbt "testOnly hardfloat.DivSqrtRecFN_smallTest -- -z compute"` to run the test for the raw 16bit floating point division.
+Use `sbt "testOnly hardfloat.DivSqrtRecFN_smallTest"` to run the test for the 16bit brainfloat division.
+Use `sbt "testOnly GroupNorm.rangeGNTest"` to run the test for the range GroupNorm.
 
 ## Generate SystemVerilog RTL files
 Use `sbt run` to generate all the systemverilog files (files ending on .sv). All files are saved into a new directory called `generated/`
@@ -75,19 +82,49 @@ chisel-silu
 └── src
     ├── main
     │   └── scala
+    │        |── DyT
+    |        |   └── DyTLUT.scala
+    |        |
+    │        |── GroupNorm
+    |        |   └── rangeGN.scala
+    |        |
+    │        |── hardfloat
+    |        |   ├── common.scala
+    │        |   ├── DivSqrtRecFN_small.scala
+    │        |   ├── FNFromRecFN.scala
+    │        |   ├── primitives.scala
+    │        |   ├── rawFloatFromFN.scala
+    │        |   ├── rawFloatFromRecFN.scala
+    │        |   ├── recFNFromFN.scala
+    |        |   └── RoundAnyRawFNToRecFN.scala
+    |        |  
     │        └── silu
-    |            ├── BF16toFP.scala
-    │            ├── FPAdd.scala
-    │            ├── FPMult.scala
+    │            ├── BF16toFP.scala
     │            ├── FloatUtils.scala
     │            ├── FloatWrapper.scala
+    │            ├── FPAdd.scala
+    │            ├── FPMult.scala
     │            ├── relu6.scala
     │            ├── silu.scala
     |            ├── siluLUT.scala
     |            └── siluUsingLUT.scala
+    |
     └── test
         └── scala
-            └── silu
+             |── DyT
+             |   |── DyTLUTTest.scala
+             |   └── DyTUsingLUTTest.scala
+             |
+             |── GroupNorm
+             |   └── rangeGNTest.scala
+             |
+             |── hardfloat
+             |   ├── DivSqrtRecFN_smallTest.scala
+             |   |── package.scala
+             |   ├── rawFloatFromFNWrapperTest.scala
+             |   └── recFNFromFNWrapperTest.scala
+             |  
+             └── silu
                 ├── BF16toFPTest.scala
                 ├── FPAddTest.scala
                 ├── FPMultTest.scala
@@ -98,3 +135,4 @@ chisel-silu
 ```
 ### Acknowledgements
 Credits to https://github.com/zhemao/chisel-float/ for the floating point multiplier and adder. See LICENSE
+Credits to https://github.com/ucb-bar/berkeley-hardfloat/ for the floating point divider unit. See LICENSE
