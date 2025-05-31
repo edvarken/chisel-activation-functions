@@ -37,7 +37,12 @@ class rangeGN(val C: Int) extends Module {
   })
 
   // === Constants ===
-  val recip_alpha = "b0_10000000_0101000".U(16.W) // ≈ 1 / (1 / sqrt(2 * ln(G))) ≈ 2.625
+  val recip_alpha = Wire(UInt(16.W))
+  recip_alpha := MuxLookup(C.U, 0.U)(Seq(
+    320.U  -> "b0_10000000_0001001".U, // 1 / (1 / sqrt(2 * ln(10))) ~ 2.14596602629
+    640.U  -> "b0_10000000_0011100".U, // 1 / (1 / sqrt(2 * ln(20))) ~ 2.44774683068
+    1280.U -> "b0_10000000_0101101".U  // 1 / (1 / sqrt(2 * ln(40))) ~ 2.71620303148 
+  ))
 
   val recip_N = Wire(UInt(16.W))
   recip_N := MuxLookup(C.U, 0.U)(Seq(

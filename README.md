@@ -57,7 +57,8 @@ DyTUsingLUT.scala has 3 cycles latency for the DyT approximation, but can work i
 ### Visualization of GroupNorm and the approximation
 TODO
 ### Approximative function for GroupNorm: rangeGN
-The approximative function is described in `src/main/scala/GroupNorm/rangeGN.scala` and uses a simplified calculation to approximate the GroupNorm normalization function.
+The approximative function is described in `src/main/scala/GroupNorm/rangeGN.scala` and uses a simplified calculation to approximate the GroupNorm normalization function. `rangeGN(x_i) = (x_i - mean)/(alpha*range)`
+with `alpha = 1/sqrt(2*ln(C/G))` and `mean = (1/(C/G)) *sum(x_k)`
 
 ## Chisel3 tests
 Use `sbt test` to run all chisel3 tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
