@@ -68,15 +68,18 @@ def bar_chart_conv_matmul():
     plt.show()
 
 def cumulative_bar_chart_resnet_block(systolic_array_size=16, conv3_ws_cycles_l0_l1_l2_l3=[15874989,0,0,0]):
+    # we need data on GroupNorm cpu cycles vs hardware cycles
     input_sizes = ['Level0: 64x64x320', 'Level1: 32x32x640', 'Level2: 16x16x1280', 'Level3: 8x8x1280'] # Input tensor sizes for level 0, level 1 of UNET.
     cycles_silu_cpu = [1063292100, 52998050, 26469290, 6586850]
+    cycles_gn_cpu = [153660170, 86730940, 38327380, 9563740]
     # Create the bar chart
     plt.figure(figsize=(8, 4))
     y = np.arange(len(input_sizes))
     width = 0.15  # the width of the bars
     plt.barh(y, conv3_ws_cycles_l0_l1_l2_l3, width, label=f'Weight-Stationary CONV3 on ${systolic_array_size}x${systolic_array_size} systolic array', color='blue')
     # Plot the second bar, stacked on top of the first
-    plt.barh(y, cycles_silu_cpu, width, left=conv3_ws_cycles_l0_l1_l2_l3, label='SiLU on 1-core Rocket CPU', color='orange')
+    plt.barh(y, cycles_silu_cpu, width, left=conv3_ws_cycles_l0_l1_l2_l3, label='SiLU on 1-core Rocket CPU', color='yellow')
+    plt.barh(y, cycles_gn_cpu, width, left=cycles_silu_cpu, label='GroupNorm on 1-core Rocket CPU', color='orange')
 
     plt.ylabel('UNET Level: Input Tensor Size (XxYxC)')
     plt.xlabel('Clock Cycles')
@@ -86,32 +89,36 @@ def cumulative_bar_chart_resnet_block(systolic_array_size=16, conv3_ws_cycles_l0
     plt.tight_layout()
     plt.show()
 
-def cumulative_bar_chart_transfo_block(systolic_array_size=16, dynamicmm_attnV_ws_cycles_l0=0, dynamicmm_attnV_ws_cycles_l1=0):
-    # we need some data on the SoftMax, GELU activation and LayerNorm and GroupNorm CPU cycles.
-    # so we can compare those and say they dominate compared to the staticmm_ws_cycles which I have some data for already.(spread over 16x16 and 32x32 array though so re-run that as well!)
-    # For now, we will just plot the staticmm_ws_cycles.
-    input_sizes = ['Level0: 4096x40x4096', 'Level1: 1024x80x1024'] # Input tensor sizes for level 0, level 1 of UNET.
-    cycles_staticmm_ws = [dynamicmm_attnV_ws_cycles_l0, dynamicmm_attnV_ws_cycles_l1]
-    cycles_SoftMax_cpu = [0, 0]  # Placeholder for SoftMax CPU cycles, replace with actual data if available
+def cumulative_bar_chart_transfo_block(systolic_array_size=16, staticmm_ws_cycles_l0_l1_l2_l3 = [0,0,0,0], dynamicmm_attnV_ws_cycles_l0_l1_l2_l3=[0,0,0,0], dynamicmm_QKt_ws_cycles_l0_l1_l2_l3=[0,0,0,0]):
+    # we need some data on the SoftMax, GELU activation and LayerNorm and GroupNorm CPU cycles, vs hardware cycles.
+    # so we can compare those and say they dominate compared to the staticmm_ws_cycles
+    input_sizes = ['Level0: 4096x40x4096', 'Level1: 1024x80x1024', 'Level2: 256x160x256', 'Level3: 64x160x64'] # Input tensor sizes for level 0,1,2,3 of UNET.
+    total_dynamicmm_ws_cycles = [a + b for a, b in zip(dynamicmm_attnV_ws_cycles_l0_l1_l2_l3, dynamicmm_QKt_ws_cycles_l0_l1_l2_l3)]
+    cycles_SoftMax_cpu = [0, 0, 0, 0]  # Placeholder for SoftMax CPU cycles, replace with actual data if available
     # Create the bar chart
     plt.figure(figsize=(8, 4))
     y = np.arange(len(input_sizes))
     width = 0.15  # the width of the bars
-    plt.barh(y, cycles_staticmm_ws, width, label='WS dynamic MatMul attn*V', color='blue')
+    plt.barh(y, staticmm_ws_cycles_l0_l1_l2_l3, width, label=f'Three Weight-Stationary static MatMuls on ${systolic_array_size}x${systolic_array_size} systolic array', color='blue')
     # Plot the second bar, stacked on top of the first
-    plt.barh(y, cycles_SoftMax_cpu, width, left=cycles_staticmm_ws, label='SoftMax on CPU', color='orange')
+    plt.barh(y, total_dynamicmm_ws_cycles, width, label=f'Two Weight-Stationary dynamic MatMuls on ${systolic_array_size}x${systolic_array_size} systolic array', color='yellow')
+    # Plot the third bar, stacked on top of the second
+    plt.barh(y, cycles_SoftMax_cpu, width, left=total_dynamicmm_ws_cycles, label='SoftMax on CPU', color='orange')
 
     plt.ylabel('UNET Level: Input Tensor Size (XxYxC)')
     plt.xlabel('Clock Cycles')
-    plt.title(f'Cumulative Clock Cycles for Transformer block\'s operations run on a ${systolic_array_size}x${systolic_array_size} systolic array Gemmini accelerator')
+    plt.title(f'Cumulative Clock Cycles for Transformer blocks at different UNET levels')
     plt.yticks(y, input_sizes)
-    plt.legend()
+    # place legend top right of plot
+    plt.legend(loc='upper right')
     plt.tight_layout()
     plt.show()
 
 if __name__ == "__main__":
     # bar_chart_silu_speedup()
     # bar_chart_conv_matmul()
-    cumulative_bar_chart_resnet_block(systolic_array_size=16, conv3_ws_cycles_l0_l1_l2_l3=[15874989,17004826,16289651,5354450])
+    # cumulative_bar_chart_resnet_block(systolic_array_size=16, conv3_ws_cycles_l0_l1_l2_l3=[15874989,17004826,16289651,5354450])
     # cumulative_bar_chart_resnet_block(systolic_array_size=32, conv3_ws_cycles=[8447062,0,0,0])
-    # cumulative_bar_chart_transfo_block(systolic_array_size=32, dynamicmm_attnV_ws_cycles_l0=6206089, dynamicmm_attnV_ws_cycles_l1=429035)
+    cumulative_bar_chart_transfo_block(systolic_array_size=16, staticmm_ws_cycles_l0_l1_l2_l3=[5795875, 5636573, 7168535, 1496028],
+                                        dynamicmm_attnV_ws_cycles_l0_l1_l2_l3=[5719444,387302,45260,4853],
+                                        dynamicmm_QKt_ws_cycles_l0_l1_l2_l3=[3835741,383162,45135,4941])
