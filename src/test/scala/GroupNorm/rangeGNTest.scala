@@ -29,7 +29,7 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                 dut.io.in_a(idx).poke(value)
             }
 
-            dut.clock.step(latencyNis10) // total latency for N=10 is 28cc
+            dut.clock.step(latencyNis10) // total latency for N=10 is 29cc
 
             var expectedOutput = (0 until N).map(i => ((floatToBigInt((((i - 4.5f)*2.146f) / (N-1).toFloat).toFloat).toInt >> 16) & 0xFFFF).U(16.W)).toVector
             var diff_outputs = expectedOutput.zip(dut.io.out_a).map { case (exp, act) =>
@@ -108,7 +108,7 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                 dut.io.in_a(idx).poke(value)
             }
 
-            dut.clock.step(latencyNis20) // total latency for N=20 is 31, however according to formula: ceil(log2(20)) * 3, it should be 32 cc's
+            dut.clock.step(latencyNis20) // total latency for N=20 is 31, however according to formula: ceil(log2(20))*3+17, it should be 32 cc's
 
             var expectedOutput = (0 until N).map(i => ((floatToBigInt((((i - 9.5f)*2.447f) / (N-1).toFloat).toFloat).toInt >> 16) & 0xFFFF).U(16.W)).toVector
             var diff_outputs = expectedOutput.zip(dut.io.out_a).map { case (exp, act) =>
@@ -187,7 +187,7 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                 dut.io.in_a(idx).poke(value)
             }
 
-            dut.clock.step(latencyNis40) // total latency for N=40 is ?, however according to formula: ceil(log2(40)) * 3, it should be 35 cc's
+            dut.clock.step(latencyNis40) // total latency for N=40 is 39, however according to formula: ceil(log2(40))*3+17, it should only be 35 cc's
 
             var expectedOutput = (0 until N).map(i => ((floatToBigInt((((i - 19.5f)*2.716f) / (N-1).toFloat).toFloat).toInt >> 16) & 0xFFFF).U(16.W)).toVector
             var diff_outputs = expectedOutput.zip(dut.io.out_a).map { case (exp, act) =>
@@ -218,7 +218,7 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
 
             // ###################################################################################################
             // ########################################      test 2       #######################################
-            tolerance = 8.0f // log2(1000) ~ 9, if second to last bit in manttisa is wrong, then error can be 2^9 * 2^-6 = 2^3 = 8
+            tolerance = 8.0f // log2(1000) ~ 9, if second to last bit in mantissa is wrong, then error can be 2^9 * 2^-6 = 2^3 = 8
             println("Testing rangeGN for 40 random inputs between -1000 and 1000")
             inputVec = (0 until N).map(_ => ((floatToBigInt(scala.util.Random.nextFloat() * 2000 - 1000).toInt >> 16) & 0xFFFF).U(16.W)).toVector
             inputVec.zipWithIndex.foreach { case (value, idx) => dut.io.in_a(idx).poke(value) }
