@@ -398,7 +398,6 @@ class siluLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
       "b1011110110011010".U,
       "b1011110110010110".U
     ))
-
   } else if (intBits == 3 && fracBits == 4) {
     VecInit(Seq(  // indices 0 to 255, for x-values between -8 and +8, step size 0.0625
       "b0000000000000000".U,

@@ -12,7 +12,7 @@ import math.tanh
 
 class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
     "DyTUsingLUTTest should correctly apply an approximate DyT value from a Lookup Table on BF16 input * alpha" in {
-        simulate(new DyTUsingLUT) { c =>
+        simulate(new DyTUsingLUT(intBits = 2, fracBits = 4)) { c =>
             def toBinary(i: Int, digits: Int = 16) =
                 String.format("%" + digits + "s", i.toBinaryString).replace(' ', '0')
             var tolerance = 0.07f // DyT LUT approximation's error never gets bigger than 0.004f

@@ -61,7 +61,7 @@ class siluLUTTest extends AnyFreeSpec with Matchers {
                 val index = i.U(8.W)
                 // print the binary string of 8 bits
                 println(f"index: ${index.litValue.toInt.toBinaryString}")
-                c.io.indexIn.poke(index) // padded with zeroes at the left if less than 7 bits
+                c.io.indexIn.poke(index) // padded with zeroes at the left if less than 8 bits
 
                 val sign = index(7).litValue.toInt // sign bit
                 val intPart = index(6,5).litValue.toInt.toFloat // integer part

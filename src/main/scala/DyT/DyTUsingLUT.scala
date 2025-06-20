@@ -7,11 +7,13 @@ import silu.FPMult16ALT
 import silu.BF16toFP
 
 /**
-  * This is a Chisel implementation that uses a Lookup Table to approximate the DyT activation function between -4 and +4
-  * Below -4 and above +4, the function returns -1 and 1 respectively.
+  * This is a Chisel implementation that uses a Lookup Table to approximate the DyT activation function within a certain range
+  * If intBits=2 and fracBits=4, the range is -4 to +4
+  * If intBits=3 and fracBits=4, the range is -8 to +8
+  * Below and above the range, the function returns -1 and 1
   * The implementation only supports BF16 floating point representation
   */
-class DyTUsingLUT extends Module {
+class DyTUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
     val io = IO(new Bundle {
         val in_a = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val in_alpha = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
@@ -34,8 +36,8 @@ class DyTUsingLUT extends Module {
     val actual_exp = (exp.asSInt - 127.S(8.W)).asSInt // actual_exp can be negative!
     val mantissa = tanh_input(6,0).asUInt
 
-    val lut = Module(new DyTLUT) // LUT for the values between -4 and 4
-    val bf16tofp = Module(new BF16toFP(2, 4)) // BF16 to FP converter, 2 bits for integer part and 4 bits for fractional part
+    val lut = Module(new DyTLUT(intBits, fracBits)) // LUT for the values between -4 and 4 (or -8 and 8)
+    val bf16tofp = Module(new BF16toFP(intBits, fracBits)) // BF16 to FP converter, (e.g. 2 bits for integer part and 4 bits for fractional part)
 
     bf16tofp.io.bf16in := tanh_input // bf16tofp is purely combinatorial
     val fixedpointIntReg = RegInit(0.U(2.W)) // register for the Int part of the FixedPoint representation
@@ -55,18 +57,18 @@ class DyTUsingLUT extends Module {
     when (sign === 1.U) { // tanh_input <= -0
         when (tanh_input === "b1_00000000_0000000".U) { // tanh_input = -0
             outputReg := 0.U
-        }.elsewhen (actual_exp >= 2.S) { // tanh_input <= -4
+        }.elsewhen (actual_exp >= intBits.S) { // if intBits=2: tanh_input <= -4; if intBits=3: tanh_input <= -8
             outputReg := "b1_01111111_0000000".U // -1
-        }.otherwise { // -4 < tanh_input <= -0
+        }.otherwise { // if intBits=2: -4 < tanh_input <= -0; if intBits=3: -8 < tanh_input <= -0
             outputReg := lutValue
         }
 
     }.otherwise { // tanh_input > 0
         when (tanh_input === "b0_00000000_0000000".U) { // tanh_input = +0
             outputReg := 0.U
-        }.elsewhen (actual_exp >= 2.S) { // tanh_input >= 4
+        }.elsewhen (actual_exp >= intBits.S) { // tanh_input >= 4
             outputReg := "b0_01111111_0000000".U // +1
-        }.otherwise { // 0 < tanh_input < 4
+        }.otherwise { // if intBits=2: 0 < tanh_input < 4; if intBits=3: 0 < tanh_input < 8
             outputReg := lutValue
         }
     }
@@ -78,7 +80,7 @@ class DyTUsingLUT extends Module {
  */
 object DyTUsingLUT extends App {
     ChiselStage.emitSystemVerilogFile(
-        new DyTUsingLUT,
+        new DyTUsingLUT(intBits = 2, fracBits = 4),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
         args = Array("--target-dir", "generated")
     )
