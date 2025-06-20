@@ -54,7 +54,6 @@ class rangeGN(val C: Int) extends Module {
   require(Set(320, 640, 1280).contains(C), "C must be 320, 640, or 1280")
 
   // === FPAdd16 Reduction Tree === 
-  // TODO: calculate max and min already here in parallel!
   def reduceFPAdd(vec: Seq[UInt]): UInt = {
     if (vec.length == 1) vec.head
     else {
@@ -90,9 +89,25 @@ class rangeGN(val C: Int) extends Module {
   }
   io.debugNumeratorsOut := numerators // for debugging purposes, output the numerators
 
-  // === Compute max and min (bitwise comparison is okay) ===
-  val maxVal = io.in_a.reduce((a, b) => Mux(a > b, a, b)) // latency: ?
-  val minVal = io.in_a.reduce((a, b) => Mux(a < b, a, b))
+  def bf16LessThan(a: UInt, b: UInt): Bool = {
+    val signA = a(15)
+    val signB = b(15)
+    val absA = a(14, 0)
+    val absB = b(14, 0)
+
+    // If signs are different:
+    val signDiff = signA =/= signB
+    // val ltIfSignDiff = signA && !signB  // returns 0 if a positive(and thus b negative), 1 if a negative(and thus b positive)
+
+    // If signs are same
+    val ltIfSignSame = Mux(signA, absA > absB, absA < absB) // reverse for negative
+
+    Mux(signDiff, signA, ltIfSignSame)
+  }
+  // === Compute max and min ===
+  val maxVal = io.in_a.reduce((a, b) => Mux(bf16LessThan(a, b), b, a)) // keep max
+  val minVal = io.in_a.reduce((a, b) => Mux(bf16LessThan(a, b), a, b)) // keep min
+
 
   // === range = max - min ===
   val rangeSub = Module(new FPAdd16ALT) // 3cc latency

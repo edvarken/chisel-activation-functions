@@ -13,7 +13,7 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
         var latencyNis10 = 29
         var latencyNis20 = 31
         var latencyNis40 = 39
-        var verbose = 1
+        var verbose = 1 // 2
         println(s"Starting test with C = 320, so N=10 elements per group; using ${latencyNis10} cc's latency")
         simulate(new rangeGN(C = 320)) { dut => 
             var N = 10
