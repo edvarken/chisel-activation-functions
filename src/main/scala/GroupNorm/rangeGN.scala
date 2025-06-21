@@ -6,6 +6,7 @@ import chisel3.util._ // needed for MuxLookup and ShiftRegister
 import silu.FPMult16ALT
 import silu.FPAdd16ALT
 import hardfloat.DivSqrtRecFN_small
+
 /*
   * This is a Chisel implementation of the range GroupNorm function.
   * G   =   32 (=number of groups to divide the channel dimension into)
@@ -30,10 +31,10 @@ class rangeGN(val C: Int) extends Module {
     val in_a  = Input(Vec(N, UInt(16.W))) // BF16-encoded inputs
     val out_a = Output(Vec(N, UInt(16.W))) // BF16-encoded outputs
 
-    val debugMeanOut = Output(UInt(16.W)) // for debugging purposes, output the mean
-    val debugNumeratorsOut = Output(Vec(N, UInt(16.W))) // for debugging purposes, output the numerators
-    val debugRangeOut = Output(UInt(16.W)) // for debugging purposes, output the range
-    val debugdivResultsOut = Output(Vec(N, UInt(16.W))) // for debugging purposes, output the division results
+    // val debugMeanOut = Output(UInt(16.W)) // for debugging purposes, output the mean
+    // val debugNumeratorsOut = Output(Vec(N, UInt(16.W))) // for debugging purposes, output the numerators
+    // val debugRangeOut = Output(UInt(16.W)) // for debugging purposes, output the range
+    // val debugdivResultsOut = Output(Vec(N, UInt(16.W))) // for debugging purposes, output the division results
   })
 
   // === Constants ===
@@ -76,7 +77,7 @@ class rangeGN(val C: Int) extends Module {
   meanMult.io.b := recip_N
   val mean = RegNext(meanMult.io.res)
 
-  io.debugMeanOut := mean // for debugging purposes, output the mean
+  // io.debugMeanOut := mean // for debugging purposes, output the mean
 
   // === Subtract mean: x_i - mean ===
   val subtractors = Seq.fill(N)(Module(new FPAdd16ALT)) // 3cc latency per subtractor
@@ -87,7 +88,7 @@ class rangeGN(val C: Int) extends Module {
     subtractors(i).io.b := mean ^ (1.U << 15) // flip sign of mean to subtract
     numerators(i) := subtractors(i).io.res
   }
-  io.debugNumeratorsOut := numerators // for debugging purposes, output the numerators
+  // io.debugNumeratorsOut := numerators // for debugging purposes, output the numerators
 
   def bf16LessThan(a: UInt, b: UInt): Bool = {
     val signA = a(15)
@@ -118,7 +119,7 @@ class rangeGN(val C: Int) extends Module {
   // val range = RegNext(rangeSub.io.res) 
   val range = rangeSub.io.res
 
-  io.debugRangeOut := range // for debugging purposes, output the range
+  // io.debugRangeOut := range // for debugging purposes, output the range
 
   // === Divide each numerator by range === // setting options to round_max = "b011".U(3.W) = 3
   val dividers = Seq.fill(N)(Module(new DivSqrtRecFN_small(8, 8, options = 0))) // 11cc latency max each divider
@@ -139,7 +140,7 @@ class rangeGN(val C: Int) extends Module {
     // divResults(i) := ShiftRegister(dividers(i).io.out, 11) 
     // divResults(i) := ShiftRegister(dividers(i).io.out, 0) 
   // }
-  io.debugdivResultsOut := divResults // for debugging purposes, output the division results
+  // io.debugdivResultsOut := divResults // for debugging purposes, output the division results
 
   // === Multiply by recip_alpha ===
   val finalMuls = Seq.fill(N)(Module(new FPMult16ALT)) // 1cc latency per multiplier
@@ -160,10 +161,10 @@ class rangeGN(val C: Int) extends Module {
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change C to 640 or 1280 to generate for those configurations
  */
-// object rangeGNMain extends App {
-//     ChiselStage.emitSystemVerilogFile(
-//         new rangeGN(C = 320), 
-//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
-//         args = Array("--target-dir", "generated")
-//     )
-// }
+object rangeGNMain extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new rangeGN(C = 320), 
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated")
+    )
+}

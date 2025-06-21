@@ -42,18 +42,18 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                     
                     var expected_divResultsOut = (0 until N).map(i => ((floatToBigInt(((i - 4.5f) / (N-1).toFloat).toFloat).toInt >> 16) & 0xFFFF).U(16.W)).toVector // no final mult with alpha yet
                     println(s"Expected Mean: ${(floatToBigIntBF16(4.5f).U(16.W)).litValue.toString(2)}")
-                    println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
 
                     println(s"Expected Numerators: ${expectedNumerators.map(_.litValue.toString(2))}")
-                    println(s"Actual Numerators:   ${dut.io.debugNumeratorsOut.map(_.peek().litValue.toString(2))}")
+                    // println(s"Actual Numerators:   ${dut.io.debugNumeratorsOut.map(_.peek().litValue.toString(2))}")
 
                     println(s"Expected Range: ${floatToBigIntBF16(9f).U(16.W).litValue.toString(2)}")
-                    println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
 
-                    var diff_divresults = expected_divResultsOut.zip(dut.io.debugdivResultsOut).map { case (exp, act) =>
-                        java.lang.Float.intBitsToFloat((BigInt(exp.litValue.toInt) << 16).toInt) - java.lang.Float.intBitsToFloat((BigInt(act.peek().litValue.toInt) << 16).toInt)
-                    }
-                    println(s"Expected div results - Actual div results: ${diff_divresults}")
+                    // var diff_divresults = expected_divResultsOut.zip(dut.io.debugdivResultsOut).map { case (exp, act) =>
+                        // java.lang.Float.intBitsToFloat((BigInt(exp.litValue.toInt) << 16).toInt) - java.lang.Float.intBitsToFloat((BigInt(act.peek().litValue.toInt) << 16).toInt)
+                    // }
+                    // println(s"Expected div results - Actual div results: ${diff_divresults}")
                 }
             }
             assert(diff_outputs.forall(diff => math.abs(diff) < tolerance), s"Expected outputs differ too much from actual outputs")
@@ -83,10 +83,10 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                 println(s"Expected outputs - Actual outputs: ${diff_outputs}")
                 if (verbose > 1) { // print more details
                     println(s"Expected Mean: ${(floatToBigIntBF16(mean).U(16.W)).litValue.toString(2)}")
-                    println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
 
                     println(s"Expected Range: ${floatToBigIntBF16(range).U(16.W).litValue.toString(2)}")
-                    println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
 
                     println(s"Expected div results - Actual div results: ${diff_outputs}")
                 }
@@ -121,18 +121,18 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                     
                     var expected_divResultsOut = (0 until N).map(i => ((floatToBigInt(((i - 9.5f) / (N-1).toFloat).toFloat).toInt >> 16) & 0xFFFF).U(16.W)).toVector // no final mult with alpha yet
                     println(s"Expected Mean: ${(floatToBigIntBF16(9.5f).U(16.W)).litValue.toString(2)}")
-                    println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
 
                     println(s"Expected Numerators: ${expectedNumerators.map(_.litValue.toString(2))}")
-                    println(s"Actual Numerators:   ${dut.io.debugNumeratorsOut.map(_.peek().litValue.toString(2))}")
+                    // println(s"Actual Numerators:   ${dut.io.debugNumeratorsOut.map(_.peek().litValue.toString(2))}")
 
                     println(s"Expected Range: ${floatToBigIntBF16((N-1).toFloat).U(16.W).litValue.toString(2)}")
-                    println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
 
-                    var diff_divresults = expected_divResultsOut.zip(dut.io.debugdivResultsOut).map { case (exp, act) =>
-                        java.lang.Float.intBitsToFloat((BigInt(exp.litValue.toInt) << 16).toInt) - java.lang.Float.intBitsToFloat((BigInt(act.peek().litValue.toInt) << 16).toInt)
-                    }
-                    println(s"Expected div results - Actual div results: ${diff_divresults}")
+                    // var diff_divresults = expected_divResultsOut.zip(dut.io.debugdivResultsOut).map { case (exp, act) =>
+                        // java.lang.Float.intBitsToFloat((BigInt(exp.litValue.toInt) << 16).toInt) - java.lang.Float.intBitsToFloat((BigInt(act.peek().litValue.toInt) << 16).toInt)
+                    // }
+                    // println(s"Expected div results - Actual div results: ${diff_divresults}")
                 }
             }
             assert(diff_outputs.forall(diff => math.abs(diff) < tolerance), s"Expected outputs differ too much from actual outputs")
@@ -162,10 +162,10 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                 println(s"Expected outputs - Actual outputs: ${diff_outputs}")
                 if (verbose > 1) { // print more details
                     println(s"Expected Mean: ${(floatToBigIntBF16(mean).U(16.W)).litValue.toString(2)}")
-                    println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
 
                     println(s"Expected Range: ${floatToBigIntBF16(range).U(16.W).litValue.toString(2)}")
-                    println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
 
                     println(s"Expected div results - Actual div results: ${diff_outputs}")
                 }
@@ -200,18 +200,18 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                     
                     var expected_divResultsOut = (0 until N).map(i => ((floatToBigInt(((i - 19.5f) / (N-1).toFloat).toFloat).toInt >> 16) & 0xFFFF).U(16.W)).toVector // no final mult with alpha yet
                     println(s"Expected Mean: ${(floatToBigIntBF16(19.5f).U(16.W)).litValue.toString(2)}")
-                    println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
 
                     println(s"Expected Numerators: ${expectedNumerators.map(_.litValue.toString(2))}")
-                    println(s"Actual Numerators:   ${dut.io.debugNumeratorsOut.map(_.peek().litValue.toString(2))}")
+                    // println(s"Actual Numerators:   ${dut.io.debugNumeratorsOut.map(_.peek().litValue.toString(2))}")
 
                     println(s"Expected Range: ${floatToBigIntBF16((N-1).toFloat).U(16.W).litValue.toString(2)}")
-                    println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
 
-                    var diff_divresults = expected_divResultsOut.zip(dut.io.debugdivResultsOut).map { case (exp, act) =>
-                        java.lang.Float.intBitsToFloat((BigInt(exp.litValue.toInt) << 16).toInt) - java.lang.Float.intBitsToFloat((BigInt(act.peek().litValue.toInt) << 16).toInt)
-                    }
-                    println(s"Expected div results - Actual div results: ${diff_divresults}")
+                    // var diff_divresults = expected_divResultsOut.zip(dut.io.debugdivResultsOut).map { case (exp, act) =>
+                        // java.lang.Float.intBitsToFloat((BigInt(exp.litValue.toInt) << 16).toInt) - java.lang.Float.intBitsToFloat((BigInt(act.peek().litValue.toInt) << 16).toInt)
+                    // }
+                    // println(s"Expected div results - Actual div results: ${diff_divresults}")
                 }
             }
             assert(diff_outputs.forall(diff => math.abs(diff) < tolerance), s"Expected outputs differ too much from actual outputs")
@@ -241,10 +241,10 @@ class rangeGNTest extends AnyFreeSpec with Matchers {
                 println(s"Expected outputs - Actual outputs: ${diff_outputs}")
                 if (verbose > 1) { // print more details
                     println(s"Expected Mean: ${(floatToBigIntBF16(mean).U(16.W)).litValue.toString(2)}")
-                    println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Mean:   ${dut.io.debugMeanOut.peek().litValue.toString(2)}")
 
                     println(s"Expected Range: ${floatToBigIntBF16(range).U(16.W).litValue.toString(2)}")
-                    println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
+                    // println(s"Actual Range:   ${dut.io.debugRangeOut.peek().litValue.toString(2)}")
 
                     println(s"Expected div results - Actual div results: ${diff_outputs}")
                 }
