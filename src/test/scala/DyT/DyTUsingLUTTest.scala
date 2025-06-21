@@ -58,7 +58,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -82,7 +82,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -106,7 +106,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -166,7 +166,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -190,7 +190,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -214,7 +214,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -274,7 +274,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -298,7 +298,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -322,7 +322,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -382,7 +382,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -406,7 +406,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 
@@ -430,7 +430,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 println(f"input a-value: ${a}")
                 println(f"input alpha-value: ${alpha}")
                 println(f"tanh_input expected: ${a*alpha}")
-                println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
+                // println(f"actual tanh_input: ${java.lang.Float.intBitsToFloat((BigInt(c.io.debug_out_tanh_input.peek().litValue.toInt) << 16).toInt)}")
                 println(f"output DyT-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 println(f"expected exact DyT value: ${expected}")
 

@@ -19,7 +19,7 @@ class DyTUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
         val in_alpha = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val out_a = Output(Bits(16.W))
         // debugging outputs
-        val debug_out_tanh_input = Output(Bits(16.W))
+        // val debug_out_tanh_input = Output(Bits(16.W))
     })
 
     val a = io.in_a // a must be a BigInt
@@ -29,7 +29,7 @@ class DyTUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
     fpmult1.io.a := a
     fpmult1.io.b := alpha
     val tanh_input = fpmult1.io.res // a mantissa_rounder is used in the FPMult16ALT module
-    io.debug_out_tanh_input := tanh_input // debugging output
+    // io.debug_out_tanh_input := tanh_input // debugging output
 
     val sign = tanh_input(15).asUInt
     val exp = tanh_input(14,7).asUInt
