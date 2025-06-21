@@ -137,7 +137,7 @@ class DyTLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
       "b1011111101111111".U,
       "b1011111101111111".U,
       "b1011111101111111".U,
-      "b1011111101111111".U,  // index 127: 1111111 (this is -3.9375): should give DyT value of -0.99609375
+      "b1011111101111111".U  // index 127: 1111111 (this is -3.9375): should give DyT value of -0.99609375
     ))
   } else if (intBits == 2 && fracBits == 5) {
     VecInit(Seq(
@@ -396,7 +396,7 @@ class DyTLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
       "b1011111101111111".U,
       "b1011111101111111".U,
       "b1011111101111111".U,
-      "b1011111101111111".U,
+      "b1011111101111111".U
     ))
   } else if (intBits == 3 && fracBits == 4) {
     VecInit(Seq(
@@ -655,7 +655,7 @@ class DyTLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
       "b1011111110000000".U,
       "b1011111110000000".U,
       "b1011111110000000".U,
-      "b1011111110000000".U,
+      "b1011111110000000".U
     ))
   } else if (intBits == 3 && fracBits == 5) {
     VecInit(Seq(
@@ -1170,7 +1170,7 @@ class DyTLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
       "b1011111110000000".U,
       "b1011111110000000".U,
       "b1011111110000000".U,
-      "b1011111110000000".U,
+      "b1011111110000000".U
     ))
   } else { // Default fallback if unsupported config
     VecInit(Seq.fill(1)(0.U(16.W)))
