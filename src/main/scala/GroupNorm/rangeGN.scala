@@ -2,7 +2,7 @@ package GroupNorm
 import chisel3._
 import chisel3.util._ // needed for MuxLookup and ShiftRegister
 // _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
-// import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.ChiselStage // needed for generating (System)Verilog
 import silu.FPMult16ALT
 import silu.FPAdd16ALT
 import hardfloat.DivSqrtRecFN_small
@@ -164,7 +164,8 @@ class rangeGN(val C: Int) extends Module {
 object rangeGNMain extends App {
     ChiselStage.emitSystemVerilogFile(
         new rangeGN(C = 320), 
-        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "--lowering-options=" + List(
+        "disallowLocalVariables", "disallowPackedArrays", "locationInfoStyle=wrapInAtSquareBracket").reduce(_ + "," + _)),
         args = Array("--target-dir", "generated")
     )
 }
