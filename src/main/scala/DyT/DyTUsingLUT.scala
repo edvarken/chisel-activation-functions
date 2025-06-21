@@ -40,8 +40,8 @@ class DyTUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
     val bf16tofp = Module(new BF16toFP(intBits, fracBits)) // BF16 to FP converter, (e.g. 2 bits for integer part and 4 bits for fractional part)
 
     bf16tofp.io.bf16in := tanh_input // bf16tofp is purely combinatorial
-    val fixedpointIntReg = RegInit(0.U(2.W)) // register for the Int part of the FixedPoint representation
-    val fixedpointFracReg = RegInit(0.U(4.W)) // register for the Frac part of the FixedPoint representation
+    val fixedpointIntReg = RegInit(0.U(intBits.W)) // register for the Int part of the FixedPoint representation
+    val fixedpointFracReg = RegInit(0.U(fracBits.W)) // register for the Frac part of the FixedPoint representation
     val fixedpointSignReg = RegInit(0.U(1.W)) // register for the Sign part of the FixedPoint representation
     fixedpointIntReg := bf16tofp.io.intout 
     fixedpointFracReg := bf16tofp.io.fracout
