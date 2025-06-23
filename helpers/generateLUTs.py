@@ -21,12 +21,22 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4):
         print("(j        index      silu       silu_bf16         silu_bf16_float  error)")
     elif function == "tanh":
         print("(j        index      tanh       tanh_bf16         tanh_bf16_float  error)")
+    elif function == "gelu":
+        print("(j        index      gelu       gelu_bf16         gelu_bf16_float  error)")
+    else:
+        raise ValueError("Unsupported function. Use 'silu', 'tanh', or 'gelu'.")
 
     for j in np.arange(min, max, step): # from -3.9375 up to 4.0 with a step of 0.0625 for intBits=2 and fracBits=4
         if function == "silu":
             function_float = round(j/(1+math.exp(-j)), (fracBits+intBits))
         elif function == "tanh":
             function_float = round(math.tanh(j), (fracBits+intBits))
+        elif function == "gelu":
+            # GELU approximation: x * 0.5 * (1 + math.tanh((math.sqrt(2 / math.pi) * (x + 0.044715 * x**3))))
+            # exact GELU:
+            function_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), (fracBits+intBits))
+        else:
+            raise ValueError("Unsupported function. Use 'silu', 'tanh', or 'gelu'.")
 
         j_float = f"{j:.4f}" # round to 4 decimal places
         # Convert float32 to 4-byte representation (big-endian)
@@ -70,9 +80,11 @@ def printOrderedIndexedFunctionTableInChiselSyntax(function="silu", intBits=2, f
     max = float(pow(2, intBits))
     for j in np.arange(0.0000, max, +step):
         if function == "silu":
-            function_float = round(j/(1+math.exp(-j)), 6)
+            function_float = round(j/(1+math.exp(-j)), (fracBits+intBits))
         elif function == "tanh":
-            function_float = round(math.tanh(j), 6)
+            function_float = round(math.tanh(j), (fracBits+intBits))
+        elif function == "gelu":
+            function_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), (fracBits+intBits))
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
         # Take the first 2 bytes (most significant bits) for BF16
@@ -84,9 +96,11 @@ def printOrderedIndexedFunctionTableInChiselSyntax(function="silu", intBits=2, f
     print("\"b0000000000000000\".U,") # add zero entry for -0.0
     for j in np.arange(-step, -max, -step):
         if function == "silu":
-            function_float = round(j/(1+math.exp(-j)), 6)
+            function_float = round(j/(1+math.exp(-j)), (fracBits+intBits))
         elif function == "tanh":
-            function_float = round(math.tanh(j), 6)
+            function_float = round(math.tanh(j), (fracBits+intBits))
+        elif function == "gelu":
+            function_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), (fracBits+intBits))
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
         # Take the first 2 bytes (most significant bits) for BF16
@@ -106,12 +120,10 @@ def printIndices(intBits=2, fracBits=4):
         print(f"({j}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b})")
 
 if __name__ == "__main__":
-    printIndexedFunctionTableExtensive(function="silu", intBits=3, fracBits=4)
-    # printIndexedFunctionTableExtensive(function="tanh", intBits=3, fracBits=4)
+    # printIndexedFunctionTableExtensive(function="gelu", intBits=2, fracBits=4)
 
     # printIndexedSiluTableSimple()
 
-    # printOrderedIndexedFunctionTableInChiselSyntax(function="silu", intBits=2, fracBits=5)
-    # printOrderedIndexedFunctionTableInChiselSyntax(function="tanh", intBits=3, fracBits=5)
+    printOrderedIndexedFunctionTableInChiselSyntax(function="gelu", intBits=3, fracBits=5)
     
     # printIndices(intBits=2, fracBits=4)
