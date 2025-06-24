@@ -25,10 +25,10 @@ def getDyTTableValues() -> tuple[List[float], List[float]]:
 
 
 if __name__ == "__main__":
-    DyT_plot = plt.figure(figsize=(12, 8)) 
+    DyT_plot = plt.figure(figsize=(10, 8)) 
 
-    plt.title("Dynamic Tanh function and approximation")
-    plt.xlabel("α*x") # linear x and y axes
+    plt.title("Dynamic Tanh function and approximation", fontsize=18)
+    plt.xlabel("α*x", fontsize=16) # linear x and y axes
 
     # set the x and y limits
     xmin = -5
@@ -37,11 +37,11 @@ if __name__ == "__main__":
     ymax = 2
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
-    plt.ylabel("y")
+    plt.ylabel("y", fontsize=16)
     plt.grid()
     # show more gridlines
-    plt.xticks(np.arange(xmin, xmax+1, 1))
-    plt.yticks(np.arange(ymin, ymax, 1))
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax, 1), fontsize=14)
 
     colors = ['k', 'r', 'blue'] # black, red, green
 
@@ -60,6 +60,6 @@ if __name__ == "__main__":
     plt.plot(outX, outY, '.', color=colors[1], markersize=3.6)
     plt.plot(x, approx_DyT, label='DyT(α*x) = -1 for α*x <= -4; one of 128 look-up-table values for -4 < α*x < 4; +1 for α*x >= 4', color=colors[1], linestyle='-')  # Combine labels into one
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=3)  # Place legend below the plot
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=13)  # Place legend below the plot
     plt.tight_layout()  # Adjust layout to prevent stretching
     plt.show()

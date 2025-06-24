@@ -29,10 +29,10 @@ def relu(x):
 
 
 if __name__ == "__main__":
-    silu_plot = plt.figure(figsize=(12, 8)) 
+    silu_plot = plt.figure(figsize=(10, 8)) 
 
-    plt.title("SiLU function and two approximations")
-    plt.xlabel("x") # linear x and y axes
+    plt.title("SiLU function and two approximations", fontsize=18)
+    plt.xlabel("x", fontsize=16) # linear x and y axes
 
     # set the x and y limits
     xmin = -6
@@ -41,11 +41,11 @@ if __name__ == "__main__":
     ymax = 6
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
-    plt.ylabel("y")
+    plt.ylabel("y", fontsize=16)
     plt.grid()
     # show more gridlines
-    plt.xticks(np.arange(xmin, xmax+1, 1))
-    plt.yticks(np.arange(ymin, ymax, 1))
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax, 1), fontsize=14)
 
     colors = ['k', 'r', 'blue'] # blue, red, green
 
@@ -70,6 +70,8 @@ if __name__ == "__main__":
     plt.plot(outX, outY, '.', color=colors[2], markersize=3.6)
     plt.plot(x, approx_silu2, label='SiLU2(x) = 0 for x <= -4; one of 128 look-up-table values for -4 < x < 4; x for x >= 4', color=colors[2], linestyle='-')  # Combine labels into one
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=3)  # Place legend below the plot
+    # plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=3)  # Place legend below the plot
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=13)  # Place legend below the plot
+
     plt.tight_layout()  # Adjust layout to prevent stretching
     plt.show()
