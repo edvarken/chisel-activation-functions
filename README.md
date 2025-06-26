@@ -45,11 +45,43 @@ The mean squared error(MSE) is calculated using linearly spaced sample points in
 ### Fitting the SiLU hardware module into the Gemmini accelerator platform
 This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, we place 16 SiLU hardware units in parallel, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
 
+## GELU
+### Visualization of GELU and the two approximative versions
+![GELUandApproximation](img/GELUandApproximation.png)
+
+### Approximative function for GELU
+The hardware implementation is described in `src/main/scala/gelu/geluUsingLUT.scala` and uses a piecewise function to approximate the GELU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
+
+| Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
+|-----------|----------------|-------------|-------------------------------------------|
+| GELUa(x)  | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
+| GELUb(x)  | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
+| GELUc(x)  | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| GELUd(x)  | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+
+For x values below the LUT range the output is `GELU(x)=0`, for x values above the LUT range the output equals the input `GELU(x)=x`.
+
+`geluUsingLUT.scala` has only 1 cycle latency for the GELU approximation.
+
+### Comparing the GELU versions
+For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
+The mean squared error(MSE) is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the exact GELU function, where a lower MSE is better.
+
+| Function | MSE        | Cells | Area (um^2) | Power (mW) | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.1) (um^2) |
+|----------|------------|-------|-------------|------------|--------------------------|---------------------------------------------|
+| GELUa(x) | 0.0000143  | 357   | 592.76      | 0.114646   | 923                      | 59.28                                       | 
+| GELUb(x) | 0.0000148  | 585   | 919.24      | 0.136538   | 1058                     | 91.92                                       | 
+| GELUc(x) | 0.0000728  | 537   | 845.32.     | 0.132387   | 1002                     | 84.53                                       | 
+| GELUd(x) | 0.0000730  | 841   | 1296.96     | 0.164406   | 1292                     | 129.70                                      | 
+
+### Fitting the GELU hardware module into the Gemmini accelerator platform
+To integrate the GELU unit into the Gemmini accelerator, it must be parallelized to match the architecture of the systolic array. For a 16x16 systolic array, this requires 16 GELU hardware units operating in parallel, enabling simultaneous activation of 16 input values. This parallelism ensures that the application of the activation function incurs only a single-cycle latency. In a default Gemmini configuration running at 200MHz, the 16 GELU units are placed at the output of the systolic array, before outputs go into the accumulator SRAM. This allows data to be activated by the GELU function directly after the MatMul that precedes GELU. Consequently, the total area and power consumption of the GELU block scales by a factor of 16x to accommodate this parallel deployment.
+
 ## Dynamic Tanh 
 ### Visualization of Dynamic Tanh and the approximative version
 ![DyTandApproximation](img/DyTandApproximation.png)
 ### Approximative function for dynamic tanh
-The approximative function is described in `src/main/scala/silu/DyTUsingLUT.scala` and uses a piecewise function to approximate the DyT function.
+The approximative function is described in `src/main/scala/DyT/DyTUsingLUT.scala` and uses a piecewise function to approximate the DyT function.
 - DyT(α*x) = -1  for x <= -4
 - DyT(α*x) = one of the 128 entries in a lookup-table  for -4 < x < 4
 - DyT(α*x) = +1  for x >= 4
@@ -89,10 +121,11 @@ with `alpha = 1/sqrt(2*ln(C/G))`, `mean = (1/(C/G)) *sum(x_k)` and `range = max(
 
 The latency of rangeGN.scala depends on the number of elements per group. The Diffusion Model uses 32 groups(G) and the number of channels(C) can be 320, 640 or 1280. This means there are respectively 10, 20 or 40 elements per group. The amount of elements per group impacts the adder tree's depth for the mean calculation. The total latency ranges from 29 clock cycles to 31 to 39 respectively.
 This implementation of the range GroupNorm approximation cannot work in a pipelined manner.
-
+### Diagram of range GroupNorm
+![rangeGN](img/rangeGNZoomed180.png)
 ### rangeGN results
 A clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) of range GroupNorm versus the classic GroupNorm is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the classic GroupNorm, where a lower MSE is better.
+TODO: The mean squared error(MSE) of range GroupNorm versus the classic GroupNorm is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the classic GroupNorm, where a lower MSE is better.
 
 | Function        | UNET level | m  | Cells | Area (um^2)  | Power (mW) | critical path delay (ps) | Scaled area 65nm->22nm (factor x0.1) (um^2) |
 |-----------------|------------|----|-------|--------------|------------|--------------------------|---------------------------------------------|
