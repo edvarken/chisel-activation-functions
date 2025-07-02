@@ -37,7 +37,7 @@ class silu extends Module {
   val res2 = fpmult1.io.res 
 
   // (a * relu6(a + 3)) / 6
-  val magic_val = "b0_01111100_0101010".U(16.W) // 1/6 ~ 0.16601563
+  val magic_val = "b0_01111100_0101010".U(16.W) // 1/6 ~ 0.166015625
   val fpmult2 = Module(new FPMult16ALT) // 1 clock cycle latency
   fpmult2.io.a := res2
   fpmult2.io.b := magic_val

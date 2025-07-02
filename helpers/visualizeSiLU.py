@@ -30,8 +30,9 @@ def relu(x):
 
 if __name__ == "__main__":
     silu_plot = plt.figure(figsize=(10, 8)) 
+    plt.rcParams["font.family"] = "Times New Roman"
 
-    plt.title("SiLU function and two approximations", fontsize=18)
+    plt.title("Exact SiLU and two approximations", fontsize=18)
     plt.xlabel("x", fontsize=16) # linear x and y axes
 
     # set the x and y limits
@@ -52,13 +53,15 @@ if __name__ == "__main__":
     # real SiLU
     x = np.linspace(xmin, xmax, 1000) # start, stop, num
     exact_silu = x / (1 + np.exp(-x))
-    plt.plot(x, exact_silu, label='exact SiLU', color=colors[0], linestyle='-', linewidth=2)
+    plt.rcParams['text.usetex'] = True
+    plt.plot(x, exact_silu, label=r'exact SiLU', color=colors[0], linestyle='-', linewidth=1)
 
     # SiLU approximation 1
     def relu6(x):
         return np.maximum(0, np.minimum(6, x))
     approx_silu1 = (x * relu6(x+3)) / 6
-    plt.plot(x, approx_silu1, label='SiLU1(x) = x * relu6(x+3) / 6', color=colors[1], linestyle='--')
+    plt.rcParams['text.usetex'] = True
+    plt.plot(x, approx_silu1, label=r'$SiLU_1(x) = \frac{x}{6} \cdot \mathrm{ReLU6}(x+3)$', color=colors[1], linestyle='--')
 
     # SiLU approximation 2: piecewise linear function
     # for x<=-4, y=0
@@ -66,12 +69,31 @@ if __name__ == "__main__":
     # for x>=4, y=x
     outX, outY = getSiluTableValues()
 
-    approx_silu2 = np.piecewise(x, [x < -4, (x >= -4) & (x < 4), x >= 4], [0, lambda x: np.nan, lambda x: x]) # use np.nan for -4<x<4
-    plt.plot(outX, outY, '.', color=colors[2], markersize=3.6)
-    plt.plot(x, approx_silu2, label='SiLU2(x) = 0 for x <= -4; one of 128 look-up-table values for -4 < x < 4; x for x >= 4', color=colors[2], linestyle='-')  # Combine labels into one
+    approx_silu2_left = np.where(x <= -4, 0, np.nan)
+    approx_silu2_right = np.where(x >= 4, x, np.nan)
+    plt.plot(x, approx_silu2_left, color=colors[2], linestyle=':', label=None, linewidth=3)
+    plt.plot(outX, outY, ':', color=colors[2], markersize=3.6, label=None, linewidth=3)
+    # plt.plot(x, approx_silu2_right, color=colors[2], linestyle='-', label=(
+    #     "SiLU2(x) =\n"
+    #     "   0         if  x ≤ -4\n"
+    #     "   LUT(x)    if -4 < x < 4\n"
+    #     "   x         if  x ≥ 4"
+    # ))
+    plt.rcParams['text.usetex'] = True
+#     plt.plot(x, approx_silu2_right, color=colors[2], linestyle='-', label=(
+#     r"$\mathrm{SiLU2}(x) =$" "\n"
+#     r"$\quad 0 \quad\quad \mathrm{if}\ x \leq -4$" "\n"
+#     r"$\quad \mathrm{LUT}(x) \quad \mathrm{if}\ -4 < x < 4$" "\n"
+#     r"$\quad x \quad\quad \mathrm{if}\ x \geq 4$"
+# ))
+    plt.plot(x, approx_silu2_right, color=colors[2], linestyle=':',linewidth=3, label=(
+        r'$SiLU_2(x)=\left\{ \begin{array}{l} 0, \qquad \qquad x \leq -4 \\ LUT(x), \quad -4 < x < 4 \\ x, \qquad \qquad x \geq 4 \end{array} \right.$'
+    ))
 
-    # plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=3)  # Place legend below the plot
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=13)  # Place legend below the plot
+
+
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=16, frameon=True)  # Place legend below the plot
 
     plt.tight_layout()  # Adjust layout to prevent stretching
     plt.show()
