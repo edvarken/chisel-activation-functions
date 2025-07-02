@@ -9,7 +9,7 @@ def relu6(x):
 
 """
 Calculate the Mean Squared Error (MSE) between the exact SiLU and the approximated SiLU values in the range -6 <= x <= 6
-At samplepoints from -6 to 6 with a step of 0.0625
+At sample points from -6 to 6 with a step of 0.0625
 """
 def version1MSE():
     x = np.arange(-6.0000, 6.0625, 0.0625) # start, stop, step
@@ -105,3 +105,23 @@ if __name__ == "__main__":
     print(f"Version 2b MSE: {mse2b:.7f}")
     print(f"Version 2c MSE: {mse2c:.7f}")
     print(f"Version 2d MSE: {mse2d:.7f}")
+
+    exact_silu1 = - 4 / (1 + math.exp(-(-4)))
+    piecewiseSiLU1 = 0
+    error1 = exact_silu1 - piecewiseSiLU1
+    print("error at -4 if we clip to 0:", error1)
+
+    exact_silu2 = + 4 / (1 + math.exp(-4))
+    piecewiseSiLU2 = 4
+    error2 = exact_silu2 - piecewiseSiLU2
+    print("error at +4 if we clip to 4:", error2)
+
+    exact_silu3 = - 8 / (1 + math.exp(-(-8)))
+    piecewiseSiLU3 = 0
+    error3 = exact_silu3 - piecewiseSiLU3
+    print("error at -8 if we clip to 0:", error3)
+
+    exact_silu4 = + 8 / (1 + math.exp(-8))
+    piecewiseSiLU4 = 8
+    error4 = exact_silu4 - piecewiseSiLU4
+    print("error at 8 if we clip to 8:", error4)

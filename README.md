@@ -1,22 +1,33 @@
 # Chisel activation functions
-This repository contains hardware descriptions for activation and normalization functions used in Diffusion Models. The following functions are implemented in this repository: SiLU(Sigmoid-Linear-Unit), GELU, GroupNorm, and a replacement for LayerNorm called Dynamic Tanh.
-Analytically: `SiLU(x) = x / (1+exp(-x))`, `GELU(x) = x*0.5*[1+erf(x/sqrt(2))]`, `LayerNorm(x) = (x_i - mean)/(sqrt(variance))` and `GroupNorm(x_i) = (x_i - mean)/(sqrt(variance))`. The mean and variance here are calculated along all channels for layernorm, while for GroupNorm the mean and variance are only calculated along the channels per group.
+This repository contains hardware descriptions for activation and normalization functions used in Diffusion Models. The following functions are implemented in this repository: 
+- SiLU(Sigmoid-Linear-Unit)
+- GELU
+- GroupNorm 
+- LayerNorm
+
 In hardware however, these functions need to be approximated.
-The SiLU is approximated in two different ways. In a first version SiLU is approximated as `SiLU1(x) = x * ReLU6(x+3) / 6`, while the second version is implemented as a lookup-table(LUT). The GELU function is only approximated as a lookup-table.
-The LayerNorm is approximated using a Dynamic Tanh: `DyT(x) = tanh(α*x)`, which is implemented as a lookup-table.
-For GroupNorm, we use the range GroupNorm approximation: `rangeGN(x_i) = (x_i - mean)/(alpha*range)`.
+The SiLU is approximated in two different ways: using an approximation function in the first version, while the second version is using a lookup-table(LUT). The GELU function is only approximated with a lookup-table.
+The LayerNorm is approximated using a Dynamic Tanh function: `DyT(x) = tanh(α*x)`, which is implemented as a lookup-table.
+For GroupNorm, we use the range GroupNorm approximation function: `rangeGN(x_i) = (x_i - mean)/(alpha*range)`.
 All inputs and outputs are in BrainFloat16(BF16) format.
 
 The Chisel3 framework is used to describe, test and generate all hardware.
 ## SiLU 
-### Visualization of SiLU and the two approximative versions
-![SiluFunctionandApproximations](img/SiLUand2ApproxFunctions.png)
-### Version 1
-Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
-For this an Adder and two Multipliers are needed. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
-(The Adder and Multiplier modules support BF16, floating point and double numbers. The SiLU module itself only supports BF16 numbers)
+The analytic function to approximate is `SiLU(x) = x / (1+exp(-x))`.
 
-### Version 2
+<img src="img/exactSiluand2Approximations.png" alt="SiLU and Approximations" width="700"/>
+
+*Figure 1: Visualization of SiLU and the two approximative versions*
+### SiLU Version 1
+Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
+
+<img src="img/silu1_diagramZoomed180.png" alt="SiLU1" width="400"/>
+
+*Figure 2: Diagram of SiLU version 1*
+
+This approximation uses a BF16 Adder and two Multipliers. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
+
+### SiLU Version 2
 Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate the SiLU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
 
 | Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
@@ -46,9 +57,10 @@ The mean squared error(MSE) is calculated using linearly spaced sample points in
 This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, we place 16 SiLU hardware units in parallel, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
 
 ## GELU
-### Visualization of GELU and the two approximative versions
-![GELUandApproximation](img/GELUandApproximation.png)
+The analytic function to approximate is `GELU(x) = x*0.5*[1+erf(x/sqrt(2))]`.
+<img src="img/GELUandApproximation.png" alt="GELU and Approximations" width="700"/>
 
+*Figure 3: Visualization of GELU and the approximative version*
 ### Approximative function for GELU
 The hardware implementation is described in `src/main/scala/gelu/geluUsingLUT.scala` and uses a piecewise function to approximate the GELU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
 
@@ -77,9 +89,11 @@ The mean squared error(MSE) is calculated using linearly spaced sample points in
 ### Fitting the GELU hardware module into the Gemmini accelerator platform
 To integrate the GELU unit into the Gemmini accelerator, it must be parallelized to match the architecture of the systolic array. For a 16x16 systolic array, this requires 16 GELU hardware units operating in parallel, enabling simultaneous activation of 16 input values. This parallelism ensures that the application of the activation function incurs only a single-cycle latency. In a default Gemmini configuration running at 200MHz, the 16 GELU units are placed at the output of the systolic array, before outputs go into the accumulator SRAM. This allows data to be activated by the GELU function directly after the MatMul that precedes GELU. Consequently, the total area and power consumption of the GELU block scales by a factor of 16x to accommodate this parallel deployment.
 
-## Dynamic Tanh 
-### Visualization of Dynamic Tanh and the approximative version
-![DyTandApproximation](img/DyTandApproximation.png)
+## LayerNorm 
+The exact LayerNorm is defined as `LayerNorm(x) = (x_i - mean)/(sqrt(variance))`. The mean and variance here need to be calculated along all channels for each (x,y) coordinate. Since this requires three passes over all channels to normalize all the elements/channels along a (x,y) coordinate, it is very time-consuming operation. As a simpler solution, we will approximate the normalization of each element with a dynamic hyperbolic tangent function instead.
+<img src="img/DyTandApproximation.png" alt="DyT and Approximations" width="700"/>
+
+*Figure 4: Visualization of Dynamic Tanh and the approximative version*
 ### Approximative function for dynamic tanh
 The approximative function is described in `src/main/scala/DyT/DyTUsingLUT.scala` and uses a piecewise function to approximate the DyT function.
 - DyT(α*x) = -1  for x <= -4
@@ -114,15 +128,23 @@ The dynamic hyperbolic tangent function replaces the LayerNorm normalization. In
 
 
 ## range GroupNorm
-![GroupNorm](img/GroupNorm.png)
+The exact GroupNorm is defined as `GroupNorm(x_i) = (x_i - mean)/(sqrt(variance))`. The mean and variance here are calculated along the channels per group only, making it more feasible than LayerNorm. However we will approximate the variance to simplify the computation.
+
+
+<img src="img/GroupNorm.png" alt="GroupNorm" width="300"/>
+
+*Figure 5: Simple example of GroupNorm for 12 channels and 4 groups*
+
 ### Approximative function for GroupNorm: rangeGN
 The approximative function is described in `src/main/scala/GroupNorm/rangeGN.scala` and uses a simplified calculation to approximate the GroupNorm normalization function. `rangeGN(x_i) = (x_i - mean)/(alpha*range)`
 with `alpha = 1/sqrt(2*ln(C/G))`, `mean = (1/(C/G)) *sum(x_k)` and `range = max() - min()`
 
-The latency of rangeGN.scala depends on the number of elements per group. The Diffusion Model uses 32 groups(G) and the number of channels(C) can be 320, 640 or 1280. This means there are respectively 10, 20 or 40 elements per group. The amount of elements per group impacts the adder tree's depth for the mean calculation. The total latency ranges from 29 clock cycles to 31 to 39 respectively.
+The latency of `rangeGN.scala` depends on the number of elements per group. The GroupNorm in the UNET of Stable Diffusion 1.5 uses 32 groups(G) and the number of channels(C) can be 320, 640 or 1280. This means there are respectively 10, 20 or 40 elements per group. The amount of elements per group impacts the adder tree's depth for the mean calculation. The total latency ranges from 29 clock cycles to 31 to 39 respectively.
 This implementation of the range GroupNorm approximation cannot work in a pipelined manner.
 ### Diagram of range GroupNorm
-![rangeGN](img/rangeGNZoomed180.png)
+<img src="img/rangeGNZoomed180.png" alt="range GroupNorm" width="300"/>
+
+*Figure 6: Diagram of range GroupNorm*
 ### rangeGN results
 A clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
 TODO: The mean squared error(MSE) of range GroupNorm versus the classic GroupNorm is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the classic GroupNorm, where a lower MSE is better.
