@@ -72,6 +72,16 @@ def version2MSESetRange(min, max, step, testmin=-10.0000, testmax=10.0000):
     mse = np.mean(np.square(errors))
     return mse
 
+def edgeOfRangeClippingErrors(a):
+    exact_silu1 = -a / (1 + math.exp((a)))
+    piecewiseSiLU1 = 0
+    error1 = exact_silu1 - piecewiseSiLU1
+    print(f"error at -{a} if we clip to 0:", error1)
+    exact_silu2 = + a / (1 + math.exp(-a))
+    piecewiseSiLU2 = a
+    error2 = exact_silu2 - piecewiseSiLU2
+    print(f"error at +{a} if we clip to +{a}:", error2)
+
 
 if __name__ == "__main__":
     mse1 = version1MSE()
@@ -106,22 +116,10 @@ if __name__ == "__main__":
     print(f"Version 2c MSE: {mse2c:.7f}")
     print(f"Version 2d MSE: {mse2d:.7f}")
 
-    exact_silu1 = - 4 / (1 + math.exp(-(-4)))
-    piecewiseSiLU1 = 0
-    error1 = exact_silu1 - piecewiseSiLU1
-    print("error at -4 if we clip to 0:", error1)
-
-    exact_silu2 = + 4 / (1 + math.exp(-4))
-    piecewiseSiLU2 = 4
-    error2 = exact_silu2 - piecewiseSiLU2
-    print("error at +4 if we clip to 4:", error2)
-
-    exact_silu3 = - 8 / (1 + math.exp(-(-8)))
-    piecewiseSiLU3 = 0
-    error3 = exact_silu3 - piecewiseSiLU3
-    print("error at -8 if we clip to 0:", error3)
-
-    exact_silu4 = + 8 / (1 + math.exp(-8))
-    piecewiseSiLU4 = 8
-    error4 = exact_silu4 - piecewiseSiLU4
-    print("error at 8 if we clip to 8:", error4)
+    print("======== edge of range: clipping errors ========")
+    edgeOfRangeClippingErrors(1)
+    edgeOfRangeClippingErrors(2)
+    edgeOfRangeClippingErrors(4)
+    edgeOfRangeClippingErrors(8)
+    edgeOfRangeClippingErrors(16)
+    edgeOfRangeClippingErrors(32)

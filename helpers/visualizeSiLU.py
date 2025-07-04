@@ -73,19 +73,7 @@ if __name__ == "__main__":
     approx_silu2_right = np.where(x >= 4, x, np.nan)
     plt.plot(x, approx_silu2_left, color=colors[2], linestyle=':', label=None, linewidth=3)
     plt.plot(outX, outY, ':', color=colors[2], markersize=3.6, label=None, linewidth=3)
-    # plt.plot(x, approx_silu2_right, color=colors[2], linestyle='-', label=(
-    #     "SiLU2(x) =\n"
-    #     "   0         if  x ≤ -4\n"
-    #     "   LUT(x)    if -4 < x < 4\n"
-    #     "   x         if  x ≥ 4"
-    # ))
     plt.rcParams['text.usetex'] = True
-#     plt.plot(x, approx_silu2_right, color=colors[2], linestyle='-', label=(
-#     r"$\mathrm{SiLU2}(x) =$" "\n"
-#     r"$\quad 0 \quad\quad \mathrm{if}\ x \leq -4$" "\n"
-#     r"$\quad \mathrm{LUT}(x) \quad \mathrm{if}\ -4 < x < 4$" "\n"
-#     r"$\quad x \quad\quad \mathrm{if}\ x \geq 4$"
-# ))
     plt.plot(x, approx_silu2_right, color=colors[2], linestyle=':',linewidth=3, label=(
         r'$SiLU_2(x)=\left\{ \begin{array}{l} 0, \qquad \qquad x \leq -4 \\ LUT(x), \quad -4 < x < 4 \\ x, \qquad \qquad x \geq 4 \end{array} \right.$'
     ))
