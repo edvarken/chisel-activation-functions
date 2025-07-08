@@ -57,6 +57,7 @@ def version2MSE():
     mse = np.mean(np.square(errors))
     return mse
 
+
 def version2MSESetRange(min, max, step, testmin=-10.0000, testmax=10.0000):
     _, piecewiseSiLU_middle = getSiluTableValues(min, max, step) # grab only the second item in the tuple
     piecewiseSiLU_left = [0] * len(np.arange(testmin, min, step))  # list containing only zeroes for the range -6 to -4 inclusive(step= +0.0625!)
@@ -72,15 +73,27 @@ def version2MSESetRange(min, max, step, testmin=-10.0000, testmax=10.0000):
     mse = np.mean(np.square(errors))
     return mse
 
-def edgeOfRangeClippingErrors(a):
-    exact_silu1 = -a / (1 + math.exp((a)))
+
+def version2EdgeOfRangeClippingErrors(a):
+    exact_silu1 = -a / (1 + math.exp((a))) # edge on the left of origin
     piecewiseSiLU1 = 0
     error1 = exact_silu1 - piecewiseSiLU1
     print(f"error at -{a} if we clip to 0:", error1)
-    exact_silu2 = + a / (1 + math.exp(-a))
+    exact_silu2 = + a / (1 + math.exp(-a)) # edge on the right of origin
     piecewiseSiLU2 = a
     error2 = exact_silu2 - piecewiseSiLU2
     print(f"error at +{a} if we clip to +{a}:", error2)
+
+
+def sigmoidEdgeOfRangeClippingErrors(a):
+    exact_sigmoid1 = 1 / (1 + math.exp(a)) # edge on the left of origin
+    piecewise_sigmoid1 = 0
+    error1 = exact_sigmoid1 - piecewise_sigmoid1
+    print(f"error at -{a} if we clip to 0:", error1)
+    exact_sigmoid2 = 1 / (1 + math.exp(-a)) # edge on the right of origin
+    piecewise_sigmoid2 = 1
+    error2 = exact_sigmoid2 - piecewise_sigmoid2
+    print(f"error at +{a} if we clip to +1:", error2)
 
 
 if __name__ == "__main__":
@@ -115,11 +128,19 @@ if __name__ == "__main__":
     print(f"Version 2b MSE: {mse2b:.7f}")
     print(f"Version 2c MSE: {mse2c:.7f}")
     print(f"Version 2d MSE: {mse2d:.7f}")
+    print("======== version 2 edge of range: clipping errors ========")
+    version2EdgeOfRangeClippingErrors(1)
+    version2EdgeOfRangeClippingErrors(2)
+    version2EdgeOfRangeClippingErrors(4)
+    version2EdgeOfRangeClippingErrors(8)
+    version2EdgeOfRangeClippingErrors(16)
+    version2EdgeOfRangeClippingErrors(32)
 
-    print("======== edge of range: clipping errors ========")
-    edgeOfRangeClippingErrors(1)
-    edgeOfRangeClippingErrors(2)
-    edgeOfRangeClippingErrors(4)
-    edgeOfRangeClippingErrors(8)
-    edgeOfRangeClippingErrors(16)
-    edgeOfRangeClippingErrors(32)
+    print("======== version 3: Sigmoid edge of range: clipping errors ========")
+    sigmoidEdgeOfRangeClippingErrors(1)
+    sigmoidEdgeOfRangeClippingErrors(2)
+    sigmoidEdgeOfRangeClippingErrors(4)
+    sigmoidEdgeOfRangeClippingErrors(8)
+    sigmoidEdgeOfRangeClippingErrors(16)
+    sigmoidEdgeOfRangeClippingErrors(32)
+

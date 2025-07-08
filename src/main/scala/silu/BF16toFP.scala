@@ -25,7 +25,7 @@ class BF16toFP(val intBits: Int = 2, val fracBits: Int = 4) extends Module { // 
     io.signout := sign // sign bit
 
   }.otherwise {// Normalize mantissa: add implicit leading 1 for normal numbers
-    val normalizedMantissa = Cat(1.U(1.W), mantissa)//.U(8.W) // 8 bits total
+    val normalizedMantissa = Cat(1.U(1.W), mantissa)//.U(8.W) // 8 bits total, losing precision for smaller numbers close to zero!
 
     // calculate needed shift
     val expVal = exponent.asSInt - bias // real exponent
@@ -37,7 +37,7 @@ class BF16toFP(val intBits: Int = 2, val fracBits: Int = 4) extends Module { // 
 
     // shift mantissa
     // the positive shift never happens for bf16 inputs in the range (-4, 4), since then expVal <= 1, so shift is always <= -2, and this module is not used outside that range.
-    // For bf16 inputs in the range (-8, 8), the expVal <= 2 (using 4 fracBits), so the shift is still always <= -1.
+    // For bf16 inputs in the range (-8, 8) the expVal <= 2, and if we use 4 fracBits, the shift is still always <= -1.
     when(shift >= 0.S) { // exp >= (127+3)
       unsignedValue := normalizedMantissa << shift.asUInt // arithmetic shift left
     }.otherwise { // exp < (127+3)

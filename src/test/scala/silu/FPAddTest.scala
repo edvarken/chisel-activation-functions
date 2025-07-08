@@ -11,7 +11,7 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
 import scala.collection.mutable.Queue
 
 class FPAdd16Test extends AnyFreeSpec with Matchers {
-    "FPMult16ALT should add BF16 numbers correctly" in {
+    "FPAdd16ALT should add BF16 numbers correctly" in {
         simulate(new FPAdd16ALT) { c =>
             val inputsQueue = Queue((0.0f, 0.0f)) // starts with an initial tuple (0.0f, 0.0f)
             val usedInputsQueue = Queue[(Float, Float)]() // starts as a completely empty Queue/FIFO
@@ -85,6 +85,7 @@ class FPAdd16Test extends AnyFreeSpec with Matchers {
     }
 }
 
+
 class FPAdd32Test extends AnyFreeSpec with Matchers {
     "FPAdd32 should add floating point numbers correctly" in {
         simulate(new FPAdd32) { c =>
@@ -134,6 +135,7 @@ class FPAdd32Test extends AnyFreeSpec with Matchers {
         }
     }
 }
+
 
 class FPAdd64Test extends AnyFreeSpec with Matchers {
     "FPAdd64 should add double-precision floating point numbers correctly" in {
