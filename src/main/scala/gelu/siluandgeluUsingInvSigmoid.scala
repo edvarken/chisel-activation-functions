@@ -1,32 +1,47 @@
-package silu
+package gelu
 import chisel3._
 import chisel3.util._ // needed for Cat()
 // _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
 import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilogFile
+import silu.FPMult16ALT
+import silu.BF16toFP
+import silu.FPAdd16ALT
 
 /**
   * Chisel implementation using an inverted LUT containing inputs to the Sigmoid function in the range [-8, 8],
-  * and calculates silu(x) = x * sigmoid(x).
+  * and calculates silu(x) = x * sigmoid(x), or gelu(x) ~ x * sigmoid(1.703125*x)
   * the inverted LUT is configurable to contain the input values that correspond to 32, 64 or 128 equally spaced output values between [0.5 and 1.0]
   * effectively storing the inverse function: x = f^-1(y), for equally spaced y values.
   * For smaller and large numbers outside the range, the function returns 0 or the input itself respectively.
   * The implementation only supports BF16 floating point representation
   * log2lutsize = 5, 6 or 7 corresponding to 32, 64 or 128 LUT entries
   */
-class siluUsingInvSigmoid(val log2lutsize: Int = 5) extends Module {
+class siluandgeluUsingInvSigmoid(val log2lutsize: Int = 5) extends Module {
     val io = IO(new Bundle {
         val in_a = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
+        val in_select = Input(UInt(1.W)) // 0 for SiLU, 1 for GELU
         val out_a = Output(Bits(16.W))
     })
     val log2edgerange = 3 // log2edgerange always 3, this means the range is always [-8, 8] for BF16
     val a = io.in_a // a must be a BigInt
     val sign = a(15).asUInt
-    val exp = a(14,7).asUInt
+    
+    val bf16tofp = Module(new BF16toFP(3, 7)) // BF16 to Fixed Point converter, 3 bits for integer part and 7 bits for fractional part
+    val fpmult1 = Module(new FPMult16ALT) 
+    fpmult1.io.a := a // input x
+    val sigmoidInput = fpmult1.io.res
+    bf16tofp.io.bf16in := sigmoidInput
+
+    // Multiplexer
+    when (io.in_select === 0.U) { // SiLU
+        fpmult1.io.b := "b0_01111111_0000000".U(16.W) // 1.0
+    }.otherwise { // GELU
+        fpmult1.io.b := "b0_01111111_1011010".U // 1.703125
+    }
+
+    val exp = sigmoidInput(14,7).asUInt
     val actual_exp = (exp.asSInt - 127.S(8.W)).asSInt // actual_exp can be negative!
 
-    val bf16tofp = Module(new BF16toFP(3, 7)) // BF16 to Fixed Point converter, 3 bits for integer part and 7 bits for fractional part
-
-    bf16tofp.io.bf16in := a
     val a_int = bf16tofp.io.intout 
     val a_frac = bf16tofp.io.fracout
     val in_a_fp = Cat(a_int, a_frac) // create the input fixed point
@@ -34,10 +49,10 @@ class siluUsingInvSigmoid(val log2lutsize: Int = 5) extends Module {
     val index = RegInit(0.U(log2lutsize.W)) // TODO: find index for the LUT, log2lutsize bits wide, index is directly used in output
     val sigmoidReg = RegInit(0.U(16.W)) // register for the sigmoid
 
-    val fpmult = Module(new FPMult16ALT) // 1 clock cycle latency: uses a mantissa_rounder
-    fpmult.io.a := a // input x
-    fpmult.io.b := sigmoidReg // sigmoid value calculated from input x
-    io.out_a := fpmult.io.res // SILU = x * sigmoid(x)
+    val fpmult2 = Module(new FPMult16ALT)
+    fpmult2.io.a := a // input x
+    fpmult2.io.b := sigmoidReg // sigmoid value calculated from input x
+    io.out_a := fpmult2.io.res // SILU = x * sigmoid(x)
 
     when (a(14,0) === "b00000000_0000000".U ) { // in_a = +-0
         sigmoidReg := 0.U
@@ -185,9 +200,9 @@ class siluUsingInvSigmoid(val log2lutsize: Int = 5) extends Module {
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change log2lutsize to generate for other LUT depths.
  */
-// object siluUsingInvSigmoidMain extends App {
+// object siluandgeluUsingInvSigmoidMain extends App {
 //     ChiselStage.emitSystemVerilogFile(
-//         new siluUsingInvSigmoid(log2lutsize = 5),
+//         new siluandgeluUsingInvSigmoid(log2lutsize = 5),
 //         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
 //         args = Array("--target-dir", "generated")
 //     )

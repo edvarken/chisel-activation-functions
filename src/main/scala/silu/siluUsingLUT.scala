@@ -21,7 +21,6 @@ class siluUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
     val sign = a(15).asUInt
     val exp = a(14,7).asUInt
     val actual_exp = (exp.asSInt - 127.S(8.W)).asSInt // actual_exp can be negative!
-    val mantissa = a(6,0).asUInt
 
     val lut = Module(new siluLUT(intBits, fracBits)) // LUT for the values between -4 and 4 (or -8 and 8)
     val bf16tofp = Module(new BF16toFP(intBits, fracBits)) // BF16 to Fixed Point converter, 2 bits for integer part and 4 bits for fractional part
