@@ -15,13 +15,13 @@ The Chisel3 framework is used to describe, test and generate all hardware.
 ## SiLU 
 The analytic function to approximate is `SiLU(x) = x / (1+exp(-x))`.
 
-<img src="img/exactSiluand2Approximations.png" alt="SiLU and Approximations" width="700"/>
+<img src="img/exactSiluand2Approximations.png" alt="SiLU and Approximations" width="500"/>
 
 *Figure 1: Visualization of SiLU and the two approximative versions*
 ### SiLU Version 1
 Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
 
-<img src="img/silu1_diagramZoomed180.png" alt="SiLU1" width="400"/>
+<img src="img/silu1_diagramZoomed180.png" alt="SiLU1" width="300"/>
 
 *Figure 2: Diagram of SiLU version 1*
 
@@ -63,7 +63,8 @@ This SiLU unit must fit into the Gemmini accelerator platform. This means the Si
 
 ## GELU
 The analytic function to approximate is `GELU(x) = x*0.5*[1+erf(x/sqrt(2))]`.
-<img src="img/GELUandApproximation.png" alt="GELU and Approximations" width="700"/>
+
+<img src="img/GELUandApproximation.png" alt="GELU and Approximations" width="500"/>
 
 *Figure 3: Visualization of GELU and the approximative version*
 ### Approximative function for GELU
@@ -96,7 +97,8 @@ To integrate the GELU unit into the Gemmini accelerator, it must be parallelized
 
 ## LayerNorm 
 The exact LayerNorm is defined as `LayerNorm(x) = (x_i - mean)/(sqrt(variance))`. The mean and variance here need to be calculated along all channels for each (x,y) coordinate. Since this requires three passes over all channels to normalize all the elements/channels along a (x,y) coordinate, it is very time-consuming operation. As a simpler solution, we will approximate the normalization of each element with a dynamic hyperbolic tangent function instead.
-<img src="img/DyTandApproximation.png" alt="DyT and Approximations" width="700"/>
+
+<img src="img/DyTandApproximation.png" alt="DyT and Approximations" width="500"/>
 
 *Figure 4: Visualization of Dynamic Tanh and the approximative version*
 ### Approximative function for dynamic tanh
@@ -136,7 +138,7 @@ The dynamic hyperbolic tangent function replaces the LayerNorm normalization. In
 The exact GroupNorm is defined as `GroupNorm(x_i) = (x_i - mean)/(sqrt(variance))`. The mean and variance here are calculated along the channels per group only, making it more feasible than LayerNorm. However we will approximate the variance to simplify the computation.
 
 
-<img src="img/GroupNorm.png" alt="GroupNorm" width="300"/>
+<img src="img/GroupNorm.png" alt="GroupNorm" width="400"/>
 
 *Figure 5: Simple example of GroupNorm for 12 channels and 4 groups*
 
@@ -147,9 +149,12 @@ with `alpha = 1/sqrt(2*ln(C/G))`, `mean = (1/(C/G)) *sum(x_k)` and `range = max(
 The latency of `rangeGN.scala` depends on the number of elements per group. The GroupNorm in the UNET of Stable Diffusion 1.5 uses 32 groups(G) and the number of channels(C) can be 320, 640 or 1280. This means there are respectively 10, 20 or 40 elements per group. The amount of elements per group impacts the adder tree's depth for the mean calculation. The total latency ranges from 29 clock cycles to 31 to 39 respectively.
 This implementation of the range GroupNorm approximation cannot work in a pipelined manner.
 ### Diagram of range GroupNorm
-<img src="img/rangeGNZoomed180.png" alt="range GroupNorm" width="300"/>
+<img src="img/rangeGNZoomed180.png" alt="range GroupNorm" width="400"/>
 
 *Figure 6: Diagram of range GroupNorm*
+
+This approximation's critical path uses an adder tree, a multiplier with 1/m, a subtractor, a divider and another final multiplier, totaling a latency of of 30 clock cycles. The module can be pipelined however, to hide the latency.
+
 ### rangeGN results
 A clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
 TODO: The mean squared error(MSE) of range GroupNorm versus the classic GroupNorm is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the classic GroupNorm, where a lower MSE is better.
