@@ -62,10 +62,10 @@ class geluUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change intBits,fracBits to generate for other configurations
  */
-object geluUsingLUTMain extends App {
-    ChiselStage.emitSystemVerilogFile(
-        new geluUsingLUT(intBits = 2, fracBits = 4), // Change intBits and fracBits as needed
-        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
-        args = Array("--target-dir", "generated")
-    )
-}
+// object geluUsingLUTMain extends App {
+//     ChiselStage.emitSystemVerilogFile(
+//         new geluUsingLUT(intBits = 2, fracBits = 4), // Change intBits and fracBits as needed
+//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+//         args = Array("--target-dir", "generated")
+//     )
+// }

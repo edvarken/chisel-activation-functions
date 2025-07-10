@@ -161,11 +161,11 @@ class rangeGN(val C: Int) extends Module {
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change C to 640 or 1280 to generate for those configurations
  */
-object rangeGNMain extends App {
-    ChiselStage.emitSystemVerilogFile(
-        new rangeGN(C = 320), 
-        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "--lowering-options=" + List(
-        "disallowLocalVariables", "disallowPackedArrays", "locationInfoStyle=wrapInAtSquareBracket").reduce(_ + "," + _)),
-        args = Array("--target-dir", "generated")
-    )
-}
+// object rangeGNMain extends App {
+//     ChiselStage.emitSystemVerilogFile(
+//         new rangeGN(C = 320), 
+//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "--lowering-options=" + List(
+//         "disallowLocalVariables", "disallowPackedArrays", "locationInfoStyle=wrapInAtSquareBracket").reduce(_ + "," + _)),
+//         args = Array("--target-dir", "generated")
+//     )
+// }

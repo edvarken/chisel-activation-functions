@@ -139,7 +139,7 @@ def printIndices(intBits=2, fracBits=4):
 
 if __name__ == "__main__":
     # printIndexedFunctionTableExtensive(function="gelu", intBits=2, fracBits=4)
-    printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=32)
+    printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=64)
 
     # printIndexedSiluTableSimple()
 

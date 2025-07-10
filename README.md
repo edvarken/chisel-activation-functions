@@ -174,7 +174,7 @@ Use `sbt "testOnly hardfloat.DivSqrtRecFN_smallTest"` to run the test for the 16
 Use `sbt "testOnly GroupNorm.rangeGNTest"` to run the test for the range GroupNorm.
 
 ## Generate SystemVerilog RTL files
-Use `sbt run` to generate systemverilog files (files ending on .sv). Terminal will ask you what file is toplevel. Generated files are saved into `generated/`
+Use `sbt run` to generate systemverilog files (files ending on .sv). Terminal will ask what file is toplevel (if multiple files have the ChiselStage.emitSystemVerilogFile uncommented). Generated files are saved into `generated/`
 
 ### Acknowledgements
 Credits to https://github.com/zhemao/chisel-float/ for the floating point multiplier and adder. See LICENSE

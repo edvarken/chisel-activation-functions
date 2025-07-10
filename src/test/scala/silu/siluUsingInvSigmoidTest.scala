@@ -10,9 +10,9 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
                    floatAdd, doubleAdd}
 import math.exp
 
-class siluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
-    "siluUsingInvSigmoidTest should correctly apply an approximate SiLU value for a BF16 input, using 32 non-uniformly spaced inverse Sigmoid values in [-8, 8]" in {
-        simulate(new siluUsingInvSigmoid(log2lutsize = 5)) { c =>
+class siluUsingInvSigmoid32Test extends AnyFreeSpec with Matchers {
+    "siluUsingInvSigmoid32Test should correctly apply an approximate SiLU value for a BF16 input, using 32 non-uniformly spaced inverse Sigmoid values in [-8, 8]" in {
+        simulate(new siluUsingInvSigmoid32) { c =>
             var tolerance = 0.125f // approximation+quantization errors together
             c.io.in_a.poke("b0_00000000_0000000".U(16.W)) // BF16 are the upper 16 bits of a 32-bit float
             c.clock.step(2) // latency: 5 comparators with 1 sigmoidReg (1cc), 1 mult (1cc), no Add since x>0

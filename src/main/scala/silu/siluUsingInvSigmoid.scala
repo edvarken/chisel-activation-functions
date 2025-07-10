@@ -7,18 +7,18 @@ import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilo
 /**
   * Chisel implementation using an inverted LUT containing inputs to the Sigmoid function in the range [-8, 8],
   * and calculates silu(x) = x * sigmoid(x).
-  * the inverted LUT is configurable to contain the input values that correspond to 32, 64 or 128 equally spaced output values between [0.5 and 1.0]
+  * the inverted LUT is configurable to contain the input values that correspond to 32 equally spaced output values between [0.5 and 1.0]
   * effectively storing the inverse function: x = f^-1(y), for equally spaced y values.
   * For smaller and large numbers outside the range, the function returns 0 or the input itself respectively.
   * The implementation only supports BF16 floating point representation
-  * log2lutsize = 5, 6 or 7 corresponding to 32, 64 or 128 LUT entries
   */
-class siluUsingInvSigmoid(val log2lutsize: Int = 5) extends Module {
+class siluUsingInvSigmoid32 extends Module {
     val io = IO(new Bundle {
         val in_a = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val out_a = Output(Bits(16.W))
     })
     val log2edgerange = 3 // log2edgerange always 3, this means the range is always [-8, 8] for BF16
+    val log2lutsize = 5 // log2lutsize = 5 corresponding to 32 LUT entries
     val a = io.in_a // a must be a BigInt
     val sign = a(15).asUInt
     val exp = a(14,7).asUInt
@@ -181,14 +181,14 @@ class siluUsingInvSigmoid(val log2lutsize: Int = 5) extends Module {
 }
 
 /**
- * Generate Verilog sources and save it in generated/siluUsingInvSigmoid.v
+ * Generate Verilog sources and save it in generated/siluUsingInvSigmoid32.sv
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change log2lutsize to generate for other LUT depths.
  */
-// object siluUsingInvSigmoidMain extends App {
-//     ChiselStage.emitSystemVerilogFile(
-//         new siluUsingInvSigmoid(log2lutsize = 5),
-//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
-//         args = Array("--target-dir", "generated")
-//     )
-// }
+object siluUsingInvSigmoid32Main extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new siluUsingInvSigmoid32,
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated")
+    )
+}
