@@ -34,8 +34,10 @@ Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a pi
 |-----------|----------------|-------------|-------------------------------------------|
 | SiLU2a(x) | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
 | SiLU2b(x) | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
-| SiLU2c(x) | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
-| SiLU2d(x) | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| SiLU2c(x) | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
+| SiLU2d(x) | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| SiLU2e(x) | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| SiLU2f(x) | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
 
 For x values below the LUT range the output is `SiLU2(x)=0`, for x values above the LUT range the output equals the input `SiLU2(x)=x`.
 
@@ -48,15 +50,17 @@ This implementation uses 5 comparators to find the index of the stored input clo
 
 ### Comparing the SiLU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
+The mean squared error(MSE) is calculated using 300 random sample points in the range -8 to 8. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
 
 | Function  | MSE            | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.1) (um^2) |
 |-----------|----------------|-------|------------------|--------------|--------------------------|---------------------------------------------|
 | SiLU1(x)  | 0.004861       | 629   | 1755.04          | 0.633941     | 2263                     | 175.50                                      |
-| SiLU2a(x) | 0.0003603      | 358   | 599.48           | 0.114480     | 1002                     | 59.95                                       | 
-| SiLU2b(x) | 0.0003519      | 582   | 924.00           | 0.133114     | 1214                     | 92.40                                       | 
-| SiLU2c(x) | 0.0000949      | 579   | 908.040          | 0.132313     | 1048                     | 90.80                                       | 
-| SiLU2d(x) | 0.0000938      | 979   | 1472.520         | 0.171142     | 1137                     | 147.25                                      | 
+| SiLU2a(x) | 7.06E-4        | 358   | 599.48           | 0.114480     | 1002                     | 59.95                                       | 
+| SiLU2b(x) | 3.89E-4        | 582   | 924.00           | 0.133114     | 1214                     | 92.40                                       | 
+| SiLU2c(x) | 4.63E-4        | 0     | 0                | 0            | 0                        | 0                                           | 
+| SiLU2d(x) | 2.71E-4        | 579   | 908.040          | 0.132313     | 1048                     | 90.80                                       | 
+| SiLU2e(x) | 6.76E-5        | 979   | 1472.520         | 0.171142     | 1137                     | 147.25                                      | 
+| SiLU2f(x) | 2.45E-5        | 0     | 0                | 0            | 0                        | 0                                           | 
 
 ### Fitting the SiLU hardware module into the Gemmini accelerator platform
 This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, we place 16 SiLU hardware units in parallel, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
@@ -74,8 +78,10 @@ The hardware implementation is described in `src/main/scala/gelu/geluUsingLUT.sc
 |-----------|----------------|-------------|-------------------------------------------|
 | GELUa(x)  | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
 | GELUb(x)  | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
-| GELUc(x)  | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
-| GELUd(x)  | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| GELUc(x)  | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
+| GELUd(x)  | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| GELUe(x)  | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| GELUf(x)  | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
 
 For x values below the LUT range the output is `GELU(x)=0`, for x values above the LUT range the output equals the input `GELU(x)=x`.
 
@@ -83,14 +89,16 @@ For x values below the LUT range the output is `GELU(x)=0`, for x values above t
 
 ### Comparing the GELU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the exact GELU function, where a lower MSE is better.
+The mean squared error(MSE) is calculated using 300 random sample points in the range -8 to 8. It shows how well the approximation fits the exact GELU function, where a lower MSE is better.
 
 | Function | MSE        | Cells | Area (um^2) | Power (mW) | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.1) (um^2) |
 |----------|------------|-------|-------------|------------|--------------------------|---------------------------------------------|
-| GELUa(x) | 0.0000143  | 357   | 592.76      | 0.114646   | 923                      | 59.28                                       | 
-| GELUb(x) | 0.0000148  | 585   | 919.24      | 0.136538   | 1058                     | 91.92                                       | 
-| GELUc(x) | 0.0000728  | 537   | 845.32.     | 0.132387   | 1002                     | 84.53                                       | 
-| GELUd(x) | 0.0000730  | 841   | 1296.96     | 0.164406   | 1292                     | 129.70                                      | 
+| GELUa(x) | 2.73E-4    | 357   | 592.76      | 0.114646   | 923                      | 59.28                                       | 
+| GELUb(x) | 4.27E-5    | 585   | 919.24      | 0.136538   | 1058                     | 91.92                                       | 
+| GELUc(x) | 6.18E-6    | 0     | 0           | 0          | 0                        | 0                                           | 
+| GELUd(x) | 3.18E-4    | 537   | 845.32      | 0.132387   | 1002                     | 84.53                                       | 
+| GELUe(x) | 4.31E-5    | 841   | 1296.96     | 0.164406   | 1292                     | 129.70                                      |
+| GELUf(x) | 6.88E-6    | 0     | 0           | 0          | 0                        | 0                                           | 
 
 ### Fitting the GELU hardware module into the Gemmini accelerator platform
 To integrate the GELU unit into the Gemmini accelerator, it must be parallelized to match the architecture of the systolic array. For a 16x16 systolic array, this requires 16 GELU hardware units operating in parallel, enabling simultaneous activation of 16 input values. This parallelism ensures that the application of the activation function incurs only a single-cycle latency. In a default Gemmini configuration running at 200MHz, the 16 GELU units are placed at the output of the systolic array, before outputs go into the accumulator SRAM. This allows data to be activated by the GELU function directly after the MatMul that precedes GELU. Consequently, the total area and power consumption of the GELU block scales by a factor of 16x to accommodate this parallel deployment.
@@ -121,14 +129,14 @@ Multiple flavours of this version exist however. The range where the lookup-tabl
 
 ### Comparing the Dynamic Tanh versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) of every approximation versus the exact dynamic tanh function is calculated using linearly spaced sample points in the range -10 to 10. It shows how well the approximation fits the exact dynamic tanh function, where a lower MSE is better.
+The mean squared error(MSE) of every approximation versus the exact dynamic tanh function is calculated using 300 random sample points in the range -8 to 8. It shows how well the approximation fits the exact dynamic tanh function, where a lower MSE is better.
 
 | Function  | MSE            | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.1) (um^2) |
 |-----------|----------------|-------|------------------|--------------|--------------------------|---------------------------------------------|
-| Dyt1(x)   | 0.0000020      | 428   | 1069.60          | 0.355952     | 1112                     | 106.96                                      |
-| DyT2(x)   | 0.0000018      | 497   | 1172.08          | 0.387214     | 1112                     | 117.21                                      | 
-| DyT3(x)   | 0.0000073      | 464   | 1120.00          | 0.385373     | 1114                     | 112.00                                      | 
-| DyT4(x)   | 0.0000071      | 523   | 1212.96          | 0.404407     | 1112                     | 121.30                                      | 
+| Dyt1(x)   | 3.20E-4        | 428   | 1069.60          | 0.355952     | 1112                     | 106.96                                      |
+| DyT2(x)   | 8.22E-5        | 497   | 1172.08          | 0.387214     | 1112                     | 117.21                                      | 
+| DyT3(x)   | 2.83E-4        | 464   | 1120.00          | 0.385373     | 1114                     | 112.00                                      | 
+| DyT4(x)   | 7.95E-5        | 523   | 1212.96          | 0.404407     | 1112                     | 121.30                                      | 
 
 ### Fitting the Dynamic Tanh hardware module into the Gemmini accelerator platform
 The dynamic hyperbolic tangent function replaces the LayerNorm normalization. Instead of requiring multiple passes across the channel dimension, a single application of the dynamic tanh activation is used. Each spatial element (height and width) has its own alpha factor, which is shared across the channels, approximating the LayerNorm. Since the module takes both alpha and the tensor's element as inputs, we can just place 16 DyT modules in parallel to match the systolic array bandwidth.

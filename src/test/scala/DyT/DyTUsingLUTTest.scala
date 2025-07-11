@@ -76,7 +76,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
-            println(f"SiLU LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 50.0f
             mse = 0.0f
@@ -107,7 +107,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the larger range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 0.5f
             mse = 0.0f
@@ -138,7 +138,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the smaller range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
         }
     }
 
@@ -204,7 +204,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
-            println(f"SiLU LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 50.0f
             mse = 0.0f
@@ -235,7 +235,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the larger range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 0.5f
             mse = 0.0f
@@ -266,7 +266,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the smaller range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
         }
     }
 
@@ -332,7 +332,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
-            println(f"SiLU LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 50.0f
             mse = 0.0f
@@ -363,7 +363,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the larger range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 0.5f
             mse = 0.0f
@@ -394,7 +394,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the smaller range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
         }
     }
 
@@ -460,7 +460,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
-            println(f"SiLU LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 50.0f
             mse = 0.0f
@@ -491,7 +491,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the larger range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
 
             max_test_value = 0.5f
             mse = 0.0f
@@ -522,7 +522,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat
             println(f"${N} inputs in the smaller range: [-${max_test_value}, ${max_test_value}], alpha still in [0,1]")
-            println(f"SiLU LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"DyT LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
         }
     }
 }
