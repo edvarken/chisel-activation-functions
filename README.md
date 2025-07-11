@@ -46,7 +46,13 @@ For x values below the LUT range the output is `SiLU2(x)=0`, for x values above 
 ### SiLU Version 3
 Version 3 uses an inverted LUT method for the sigmoid function, to implement `SiLU3(x) = x * sigmoid(x)` in the range (-8,8). Outside that range, the output is clipped to 0 or x. The inverted LUT stores the inputs to the corresponding uniformly spaced sigmoid y-values between [0.5, 1.0]. This means the stored inputs are non-uniformly spaced.
 The sigmoid can then be approximated using a linear interpolation of the index: `y = 0.5 +- (index/32)*0.5`, here using 32 entries. For inputs in the negative range (-8,0), we make use of the following property of sigmoid: `sigmoid(x) = 1-sigmoid(-x)`, which enables us to reuse the same LUT entries as for the positive range (0,8).
-This implementation uses 5 comparators to find the index of the stored input closest to the incoming input. It also uses a BF16 multiplier to multiply the input with the sigmoid, and a BF16 subtractor for negative inputs. The subtractor is pipelined and has 3 cycles latency, the multiplier has 1 cycle latency, with 2 pipeline registers storing the index and the sigmoid, this totals 6 cycles latency for the SiLU approximation, but this latency is hidden thanks to the pipeline registers.
+This implementation uses 5 comparators to find the index of the stored input closest to the incoming input. It also uses a BF16 multiplier to multiply the input with the sigmoid, and a BF16 subtractor for negative inputs. The subtractor is pipelined and has 3 cycles latency, the multiplier has one cycle latency, with two pipeline registers storing the index and the sigmoid, this totals 6 cycles latency for the SiLU approximation, but this latency is hidden thanks to the pipeline registers.
+
+| Function       | inverse Sigmoid LUT Range | LUT Entries |
+|----------------|---------------------------|-------------|
+| InvSigmoida(y) | 0.5 < y < 1.0             | 32          |
+| InvSigmoidb(y) | 0.5 < y < 1.0             | 64          |
+| InvSigmoidc(y) | 0.5 < y < 1.0             | 128         |
 
 ### Comparing the SiLU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
@@ -61,6 +67,9 @@ The mean squared error(MSE) is calculated using 300 random sample points in the 
 | SiLU2d(x) | 2.71E-4        | 579   | 908.040          | 0.132313     | 1048                     | 90.80                                       | 
 | SiLU2e(x) | 6.76E-5        | 979   | 1472.520         | 0.171142     | 1137                     | 147.25                                      | 
 | SiLU2f(x) | 2.45E-5        | 0     | 0                | 0            | 0                        | 0                                           | 
+| SiLU3a(x) | 0.003889       | 0     | 0                | 0            | 0                        | 0                                           | 
+| SiLU3b(x) | 7.67E-4        | 0     | 0                | 0            | 0                        | 0                                           | 
+| SiLU3c(x) | 4.79E-4        | 0     | 0                | 0            | 0                        | 0                                           | 
 
 ### Fitting the SiLU hardware module into the Gemmini accelerator platform
 This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, we place 16 SiLU hardware units in parallel, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
@@ -71,21 +80,32 @@ The analytic function to approximate is `GELU(x) = x*0.5*[1+erf(x/sqrt(2))]`.
 <img src="img/GELUandApproximation.png" alt="GELU and Approximations" width="500"/>
 
 *Figure 3: Visualization of GELU and the approximative version*
-### Approximative function for GELU
+### GELU version 1
 The hardware implementation is described in `src/main/scala/gelu/geluUsingLUT.scala` and uses a piecewise function to approximate the GELU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
 
 | Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
 |-----------|----------------|-------------|-------------------------------------------|
-| GELUa(x)  | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
-| GELUb(x)  | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
-| GELUc(x)  | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
-| GELUd(x)  | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
-| GELUe(x)  | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
-| GELUf(x)  | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
+| GELU1a(x) | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
+| GELU1b(x) | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
+| GELU1c(x) | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
+| GELU1d(x) | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| GELU1e(x) | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| GELU1f(x) | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
 
 For x values below the LUT range the output is `GELU(x)=0`, for x values above the LUT range the output equals the input `GELU(x)=x`.
 
 `geluUsingLUT.scala` has only 1 cycle latency for the GELU approximation.
+
+### GELU Version 2
+Version 2 uses an inverted LUT method for the sigmoid function, just like in SiLU version 3 from earlier. However the sigmoid is now used to implement `GELU2(x) = x * sigmoid(1.702*x)` in the range (-8,8). Outside that range, the output is clipped to 0 or x. The inverted LUT stores the inputs to the corresponding uniformly spaced sigmoid y-values between [0.5, 1.0]. This means the stored inputs are non-uniformly spaced.
+The sigmoid can then be approximated using a linear interpolation of the index: `y = 0.5 +- (index/32)*0.5`, here using 32 entries. For inputs in the negative range (-8,0), we make use of the following property of sigmoid: `sigmoid(x) = 1-sigmoid(-x)`, which enables us to reuse the same LUT entries as for the positive range (0,8).
+This implementation uses 5 comparators to find the index of the stored input closest to the incoming input. It also uses a BF16 multiplier to multiply the input with the sigmoid, another BF16 multiplier to multiply 1.702 with the input, and a BF16 subtractor for negative inputs. The subtractor is pipelined and has three cycles latency, the multipliers each have one cycle latency, with two pipeline registers storing the index and the sigmoid, this totals 7 cycles latency for the GELU approximation, but this latency is hidden thanks to the pipeline registers.
+
+| Function       | inverse Sigmoid LUT Range | LUT Entries |
+|----------------|---------------------------|-------------|
+| InvSigmoida(y) | 0.5 < y < 1.0             | 32          |
+| InvSigmoidb(y) | 0.5 < y < 1.0             | 64          |
+| InvSigmoidc(y) | 0.5 < y < 1.0             | 128         |
 
 ### Comparing the GELU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
@@ -93,12 +113,17 @@ The mean squared error(MSE) is calculated using 300 random sample points in the 
 
 | Function | MSE        | Cells | Area (um^2) | Power (mW) | Critical path delay (ps) | Scaled area 65nm->22nm (factor x0.1) (um^2) |
 |----------|------------|-------|-------------|------------|--------------------------|---------------------------------------------|
-| GELUa(x) | 2.73E-4    | 357   | 592.76      | 0.114646   | 923                      | 59.28                                       | 
-| GELUb(x) | 4.27E-5    | 585   | 919.24      | 0.136538   | 1058                     | 91.92                                       | 
-| GELUc(x) | 6.18E-6    | 0     | 0           | 0          | 0                        | 0                                           | 
-| GELUd(x) | 3.18E-4    | 537   | 845.32      | 0.132387   | 1002                     | 84.53                                       | 
-| GELUe(x) | 4.31E-5    | 841   | 1296.96     | 0.164406   | 1292                     | 129.70                                      |
-| GELUf(x) | 6.88E-6    | 0     | 0           | 0          | 0                        | 0                                           | 
+| GELU1a(x) | 2.73E-4    | 357   | 592.76      | 0.114646   | 923                      | 59.28                                      | 
+| GELU1b(x) | 4.27E-5    | 585   | 919.24      | 0.136538   | 1058                     | 91.92                                      | 
+| GELU1c(x) | 6.18E-6    | 0     | 0           | 0          | 0                        | 0                                          | 
+| GELU1d(x) | 3.18E-4    | 537   | 845.32      | 0.132387   | 1002                     | 84.53                                      | 
+| GELU1e(x) | 4.31E-5    | 841   | 1296.96     | 0.164406   | 1292                     | 129.70                                     |
+| GELU1f(x) | 6.88E-6    | 0     | 0           | 0          | 0                        | 0                                          | 
+| GELU2a(x) | 0.001031   | 0     | 0           | 0          | 0                        | 0                                          | 
+| GELU2b(x) | 2.83E-4    | 0     | 0           | 0          | 0                        | 0                                          | 
+| GELU2c(x) | 2.59E-4    | 0     | 0           | 0          | 0                        | 0                                          | 
+
+The area for GELU2a/b/c and SiLU3a/b/c is shared since they use the same inverted Sigmoid LUT, and since we need to implement both functions, this significantly lowers their joint area!
 
 ### Fitting the GELU hardware module into the Gemmini accelerator platform
 To integrate the GELU unit into the Gemmini accelerator, it must be parallelized to match the architecture of the systolic array. For a 16x16 systolic array, this requires 16 GELU hardware units operating in parallel, enabling simultaneous activation of 16 input values. This parallelism ensures that the application of the activation function incurs only a single-cycle latency. In a default Gemmini configuration running at 200MHz, the 16 GELU units are placed at the output of the systolic array, before outputs go into the accumulator SRAM. This allows data to be activated by the GELU function directly after the MatMul that precedes GELU. Consequently, the total area and power consumption of the GELU block scales by a factor of 16x to accommodate this parallel deployment.
