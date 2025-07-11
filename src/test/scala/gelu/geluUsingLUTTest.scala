@@ -87,6 +87,40 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
         }
     }
 
+    "geluUsingLUTTest should correctly apply an approximate GELU value using a Lookup Table with 512 entries for [-4, 4] on BF16 input numbers" in {
+        simulate(new geluUsingLUT(intBits = 2, fracBits = 6)) { c =>
+            var tolerance = 0.0078125f*8
+            c.io.in_a.poke("b0_00000000_0000000".U(16.W))
+            c.clock.step(1)
+            c.io.out_a.expect("b0_00000000_0000000".U(16.W))
+
+            c.io.in_a.poke("b1_00000000_0000000".U(16.W))
+            c.clock.step(1)
+            c.io.out_a.expect("b0_00000000_0000000".U(16.W))
+            var mse = 0.0f
+            for (_ <- 0 until N) {
+                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+                c.io.in_a.poke(a_upper16bits)
+                c.clock.step(1)
+                val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                if (verbose > 0) {
+                    println(f"input x-value: ${a}")
+                    println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                    println(f"expected exact gelu value: ${expected}")
+                    println(f"Difference: ${diff}")
+                    println("###########")
+                }
+                mse += diff * diff
+            }
+            mse /= N.toFloat    
+            println(f"GELU LUT (512 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+        }
+    }
+
     "geluUsingLUTTest should correctly apply an approximate GELU value using a Lookup Table with 256 entries for [-8, 8] on BF16 input numbers" in {
         simulate(new geluUsingLUT(intBits = 3, fracBits = 4)) { c =>
             var tolerance = 0.015625f*8
@@ -152,6 +186,40 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
             }
             mse /= N.toFloat    
             println(f"GELU LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+        }
+    }
+
+    "geluUsingLUTTest should correctly apply an approximate GELU value using a Lookup Table with 1024 entries for [-8, 8] on BF16 input numbers" in {
+        simulate(new geluUsingLUT(intBits = 3, fracBits = 6)) { c =>
+            var tolerance = 0.00390625f*8
+            c.io.in_a.poke("b0_00000000_0000000".U(16.W))
+            c.clock.step(1)
+            c.io.out_a.expect("b0_00000000_0000000".U(16.W))
+
+            c.io.in_a.poke("b1_00000000_0000000".U(16.W))
+            c.clock.step(1)
+            c.io.out_a.expect("b0_00000000_0000000".U(16.W))
+            var mse = 0.0f
+            for (_ <- 0 until N) {
+                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+                c.io.in_a.poke(a_upper16bits)
+                c.clock.step(1)
+                val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                if (verbose > 0) {
+                    println(f"input x-value: ${a}")
+                    println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                    println(f"expected exact gelu value: ${expected}")
+                    println(f"Difference: ${diff}")
+                    println("###########")
+                }
+                mse += diff * diff
+            }
+            mse /= N.toFloat    
+            println(f"GELU LUT (1024 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
         }
     }
 }

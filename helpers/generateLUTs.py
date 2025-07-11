@@ -159,6 +159,6 @@ if __name__ == "__main__":
 
     # printIndexedSiluTableSimple()
 
-    printOrderedIndexedFunctionTableInChiselSyntax(function="tanh", intBits=3, fracBits=5)
+    printOrderedIndexedFunctionTableInChiselSyntax(function="gelu", intBits=3, fracBits=6)
     
     # printIndices(intBits=2, fracBits=4)
