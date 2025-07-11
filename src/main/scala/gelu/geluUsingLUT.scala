@@ -7,8 +7,9 @@ import silu.BF16toFP
 
 /**
   * This is a Chisel implementation that uses a Lookup Table to approximate the GELU activation function within a certain range
-  * If intBits=2 and fracBits=4, the range is -4 to +4.
-  * If intBits=3 and fracBits=4, the range is -8 to +8.
+  * If intBits=2, the range is -4 to +4.
+  * If intBits=3, the range is -8 to +8.
+  * the amount of fracBits determines the precision within that range.
   * For smaller and large numbers outside the range, the function returns 0 or the input itself respectively.
   * The implementation only supports BF16 floating point representation
   */

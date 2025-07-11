@@ -6,8 +6,9 @@ import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilo
 
 /**
   * This is a Chisel implementation that uses a Lookup Table to approximate the SiLU activation function within a certain range
-  * If intBits=2 and fracBits=4, the range is -4 to +4.
-  * If intBits=3 and fracBits=4, the range is -8 to +8.
+  * If intBits=2, the range is -4 to +4.
+  * If intBits=3, the range is -8 to +8.
+  * the amount of fracBits determines the precision within that range.
   * For smaller and large numbers outside the range, the function returns 0 or the input itself respectively.
   * The implementation only supports BF16 floating point representation
   */
@@ -23,7 +24,7 @@ class siluUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
     val actual_exp = (exp.asSInt - 127.S(8.W)).asSInt // actual_exp can be negative!
 
     val lut = Module(new siluLUT(intBits, fracBits)) // LUT for the values between -4 and 4 (or -8 and 8)
-    val bf16tofp = Module(new BF16toFP(intBits, fracBits)) // BF16 to Fixed Point converter, 2 bits for integer part and 4 bits for fractional part
+    val bf16tofp = Module(new BF16toFP(intBits, fracBits)) // BF16 to Fixed Point converter, e.g., 2 bits for integer part and 4 bits for fractional part
 
     bf16tofp.io.bf16in := a
     val a_int = bf16tofp.io.intout 

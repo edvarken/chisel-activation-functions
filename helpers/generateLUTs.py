@@ -102,7 +102,7 @@ def printIndexedSiluTableSimple(intBits=2, fracBits=4):
         # Convert float32 to 4-byte representation (big-endian)
         silu_bytes = struct.pack('>f', np.float32(silu_float))
         # Take the first 2 bytes (most significant bits) for BF16
-        silu_bf16_bytes = silu_bytes[:2]
+        silu_bf16_bytes = mantissaRounder(silu_bytes)
         # Convert to bit string
         silu_bf16_bits = ''.join(f'{byte:08b}' for byte in silu_bf16_bytes)
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
@@ -154,11 +154,11 @@ def printIndices(intBits=2, fracBits=4):
         print(f"({j}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b})")
 
 if __name__ == "__main__":
-    printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4)
+    # printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4)
     # printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=128)
 
     # printIndexedSiluTableSimple()
 
-    # printOrderedIndexedFunctionTableInChiselSyntax(function="gelu", intBits=3, fracBits=5)
+    printOrderedIndexedFunctionTableInChiselSyntax(function="tanh", intBits=3, fracBits=5)
     
     # printIndices(intBits=2, fracBits=4)
