@@ -2,6 +2,22 @@ import math
 import numpy as np
 import struct
 
+def mantissaRounder(function_bytes):
+    """
+    Rounds the mantissa of a float32 to the nearest BF16 value, if tied round to even.
+    """
+    # Take the first 2 bytes (most significant bits) for BF16
+    rounded_function_bf16_bytes = function_bytes[:2]
+    # Convert the last 2 bytes to an integer for comparison
+    mantissa_tail = int.from_bytes(function_bytes[2:4], byteorder='big')
+    retained_mantissa = int.from_bytes(rounded_function_bf16_bytes, byteorder='big')
+    if ((mantissa_tail > 0x8000) or (mantissa_tail==0x8000 and retained_mantissa&1)): # If (bit 15 is 1 and any lower bit is 1) or if (bit 15 is 1 and LSB of retained 7-bit mantissa is 1), round up
+        # Convert the first 2 bytes to int, add 1, then back to bytes
+        rounded_bf16_int = int.from_bytes(rounded_function_bf16_bytes, byteorder='big') + 1 # rounding up
+        return rounded_bf16_int.to_bytes(2, byteorder='big')
+    else:
+        return rounded_function_bf16_bytes # else we can just truncate(=rounding down)
+
 def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, sigmoidInvEntries=32):
     error_tolerance = 0.032
     if intBits == 2 and fracBits == 4: # -4 to +4 with a step of 0.0625; 128 entries total
@@ -53,8 +69,8 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
         j_float = f"{j:.6f}" # round to 4 decimal places
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
-        # Take the first 2 bytes (most significant bits) for BF16
-        function_bf16_bytes = function_bytes[:2]
+        # Take the first 2 bytes (most significant bits) for BF16, but round-to-nearest-and-to-even-if-tied 
+        function_bf16_bytes = mantissaRounder(function_bytes)
         # Convert to bit string
         function_bf16_bits = ''.join(f'{byte:08b}' for byte in function_bf16_bytes)
         # convert the bf16 bits to an integer representation with 3 integer bits and 7 fractional bits
@@ -105,8 +121,8 @@ def printOrderedIndexedFunctionTableInChiselSyntax(function="silu", intBits=2, f
             function_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), (fracBits+intBits))
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
-        # Take the first 2 bytes (most significant bits) for BF16
-        function_bf16_bytes = function_bytes[:2]
+        # Take the first 2 bytes (most significant bits) for BF16, but round-to-nearest-and-to-even-if-tied 
+        function_bf16_bytes = mantissaRounder(function_bytes)
         # Convert to bit string
         function_bf16_bits = ''.join(f'{byte:08b}' for byte in function_bf16_bytes)
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
@@ -121,8 +137,8 @@ def printOrderedIndexedFunctionTableInChiselSyntax(function="silu", intBits=2, f
             function_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), (fracBits+intBits))
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
-        # Take the first 2 bytes (most significant bits) for BF16
-        function_bf16_bytes = function_bytes[:2]
+        # Take the first 2 bytes (most significant bits) for BF16, but round-to-nearest-and-to-even-if-tied 
+        function_bf16_bytes = mantissaRounder(function_bytes)
         # Convert to bit string
         function_bf16_bits = ''.join(f'{byte:08b}' for byte in function_bf16_bytes)
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
@@ -138,8 +154,8 @@ def printIndices(intBits=2, fracBits=4):
         print(f"({j}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b})")
 
 if __name__ == "__main__":
-    # printIndexedFunctionTableExtensive(function="gelu", intBits=2, fracBits=4)
-    printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=64)
+    printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4)
+    # printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=128)
 
     # printIndexedSiluTableSimple()
 

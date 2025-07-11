@@ -8,7 +8,7 @@ def relu6(x):
     return np.maximum(0, np.minimum(6, x))
 
 """
-Calculate the Mean Squared Error (MSE) between the exact SiLU and the approximated SiLU values in the range -6 <= x <= 6
+version1MSE: Calculates the Mean Squared Error (MSE) between the exact SiLU and the approximated SiLU values in the range -6 <= x <= 6
 At sample points from -6 to 6 with a step of 0.0625
 """
 def version1MSE():

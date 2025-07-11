@@ -36,7 +36,7 @@ class siluandgeluUsingInvSigmoid32 extends Module {
     when (io.in_select === 0.U) { // SiLU
         fpmult1.io.b := "b0_01111111_0000000".U(16.W) // 1.0
     }.otherwise { // GELU
-        fpmult1.io.b := "b0_01111111_1011010".U // 1.703125
+        fpmult1.io.b := "b0_01111111_1011010".U(16.W) // 1.703125
     }
 
     val exp = sigmoidInput(14,7).asUInt
