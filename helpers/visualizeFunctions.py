@@ -1,0 +1,289 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+import struct
+from typing import List
+from scipy.special import erf
+
+def getGELUTableValues() -> tuple[List[float], List[float]]:
+    outX = []
+    outY = []
+    for j in np.arange(-3.9375, 4.00000, 0.0625): # -3.9375 inclusive, 4.0000 exclusive
+        gelu_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        gelu_bytes = struct.pack('>f', np.float32(gelu_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        gelu_bf16_bytes = gelu_bytes[:2]
+        # Convert to bit string
+        gelu_bf16_bits = ''.join(f'{byte:08b}' for byte in gelu_bf16_bytes)
+        # Convert the bf16 back to its float representation
+        gelu_bf16_int = int(gelu_bf16_bits, 2) << 16  # Shift back to 32-bit float position
+        gelu_bf16_float = struct.unpack('>f', struct.pack('>I', gelu_bf16_int))[0]
+        outX.append(j)
+        outY.append(gelu_bf16_float) # append the gelu_bf16_float value
+    return outX, outY
+
+
+def visualizeGELUAndApprox():
+    gelu_plot = plt.figure(figsize=(10, 8)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    plt.title("GELU function and approximation", fontsize=18)
+    # set the x and y limits
+    xmin = -6
+    xmax = 6
+    ymin = -1
+    ymax = 6
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xlabel("x", fontsize=16)
+    plt.ylabel("y", fontsize=16)
+    plt.grid()
+    # show more gridlines
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax, 1), fontsize=14)
+
+    colors = ['k', 'r', 'r'] # black, red, r
+
+    # real GELU
+    x = np.linspace(xmin, xmax, 1000) # start, stop, num
+    exact_gelu = x * 0.5 * (1 + erf(x / np.sqrt(2)))
+    plt.plot(x, exact_gelu, label='exact GELU', color=colors[0], linestyle='-', linewidth=2)
+
+    # GELU approximation : piecewise linear function
+    # for x<=-4, y=0
+    # for -4<x<4, y=one of 128 values out of a LookUpTable: just plot these values as points
+    # for x>=4, y=x
+    outX, outY = getGELUTableValues()
+
+    approx_gelu = np.piecewise(x, [x < -4, (x >= -4) & (x < 4), x >= 4], [0, lambda x: np.nan, lambda x: x]) # use np.nan for -4<x<4
+    plt.plot(outX, outY, '.', color=colors[2], markersize=3.6)
+    plt.plot(x, approx_gelu, label='GELU(x) = 0 for x <= -4; one of 128 look-up-table values for -4 < x < 4; x for x >= 4', color=colors[2], linestyle='-')  # Combine labels into one
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=13)  # Place legend below the plot
+    plt.tight_layout()  # Adjust layout to prevent stretching
+    # plt.subplots_adjust(left=0.15, right=0.85, top=0.95, bottom=0.15)
+    plt.show()        
+
+def getSiluTableValues() -> tuple[List[float], List[float]]:
+    outX = []
+    outY = []
+    for j in np.arange(-3.9375, 4.00000, 0.0625): # -3.9375 inclusive, 4.0000 exclusive
+        silu_float = round(j/(1+math.exp(-j)), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        silu_bytes = struct.pack('>f', np.float32(silu_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        silu_bf16_bytes = silu_bytes[:2]
+        # Convert to bit string
+        silu_bf16_bits = ''.join(f'{byte:08b}' for byte in silu_bf16_bytes)
+        # Convert the bf16 back to its float representation
+        silu_bf16_int = int(silu_bf16_bits, 2) << 16  # Shift back to 32-bit float position
+        silu_bf16_float = struct.unpack('>f', struct.pack('>I', silu_bf16_int))[0]
+        outX.append(j)
+        outY.append(silu_bf16_float) # append the silu_bf16_float value
+    return outX, outY
+
+
+def getSigmoidTableValues(entries=32) -> tuple[List[float], List[float]]:
+    outX = []
+    sigmoidLUT = []
+    if entries == 32:
+        step = 0.03125/2
+    elif entries == 64:
+        step = 0.015625/2
+    elif entries == 128:
+        step = 0.0078125/2
+
+    # f(x) = 1-f(-x)
+    for j in np.arange(1.0000-step, 0.5, -step): # 0.5 inclusive, 1.0000 exclusive
+        InvSigmoid_float = -math.log((1/(1-j)) - 1)
+        outX.append(InvSigmoid_float)
+        sigmoidLUT.append(1-j) # append the silu_bf16_float value
+        
+    for j in np.arange(0.5, 1.00000, step): # 0.5 inclusive, 1.0000 exclusive
+        InvSigmoid_float = -math.log((1/j) - 1)
+        outX.append(InvSigmoid_float)
+        sigmoidLUT.append(j) # append the silu_bf16_float value
+
+    return outX, sigmoidLUT
+
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+def visualizeSiLUAndApprox():
+    silu_plot = plt.figure(figsize=(10, 8)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    plt.title("Exact SiLU and three approximations", fontsize=18)
+
+    xmin = -6
+    xmax = 6
+    ymin = -1
+    ymax = 6
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xlabel("x", fontsize=16) # linear x and y axes
+    plt.ylabel("y", fontsize=16)
+    plt.grid()
+    # show more gridlines
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax, 1), fontsize=14)
+
+    colors = ['k', 'green', 'blue', 'red'] # black, red, green, blue
+
+    # real SiLU
+    x = np.linspace(xmin, xmax, 1000) # start, stop, num
+    exact_silu = x / (1 + np.exp(-x))
+    plt.rcParams['text.usetex'] = True
+    plt.plot(x, exact_silu, label=r'exact SiLU', color=colors[0], linestyle='-', linewidth=1)
+
+    # SiLU approximation 1
+    def relu6(x):
+        return np.maximum(0, np.minimum(6, x))
+    approx_silu1 = (x * relu6(x+3)) / 6
+    plt.rcParams['text.usetex'] = True
+    plt.plot(x, approx_silu1, label=r'$SiLU_1(x) = \frac{x}{6} \cdot \mathrm{ReLU6}(x+3)$', color=colors[1], linestyle='--')
+
+    # SiLU approximation 2: piecewise linear function
+    # for x<=-4, y=0
+    # for -4<x<4, y=LUT(x): one of 128 values out of a LookUpTable: just plot these values as points
+    # for x>=4, y=x
+    outX, outY = getSiluTableValues()
+    approx_silu2_left = np.where(x <= -4, 0, np.nan)
+    approx_silu2_right = np.where(x >= 4, x, np.nan)
+    plt.plot(x, approx_silu2_left, color=colors[2], linestyle='-', linewidth=1.5, label=None)
+    plt.scatter(outX, outY, marker='*', color=colors[2], s=15, label=None)
+    plt.rcParams['text.usetex'] = True
+    plt.plot(x, approx_silu2_right, color=colors[2], linestyle='-', linewidth=1.5, label=(
+        r'$SiLU_2(x)=\left\{ \begin{array}{l} 0, \qquad \qquad \qquad \quad x \leq -4 \\ siluLUT(x), \quad -4 < x < 4 \\ x, \qquad \qquad \qquad \quad x \geq 4 \end{array} \right.$'
+    ))
+
+    # SiLU approximation 3: piecewise linear function using inverse Sigmoid
+    # for x<=-8, y=0
+    # for -8<x<8, y=x*sigmoid(x)
+    # for x>=8, y=x
+    outX, sigmoidLUT = getSigmoidTableValues(entries=64)
+    approx_silu3_left = np.where(x <= -8, 0, np.nan)
+    approx_silu3_right = np.where(x >= 8, x, np.nan)
+    plt.plot(x, approx_silu3_left, color=colors[3], linestyle='-', linewidth=1.5, label=None)
+    plt.scatter(outX, np.array(sigmoidLUT) * np.array(outX), marker='.', s=20, label=None, color=colors[3])
+    plt.rcParams['text.usetex'] = True
+    plt.plot(x, approx_silu3_right, color=colors[3], linestyle='-', linewidth=1.5, label=(
+        r'$SiLU_3(x)=\left\{ \begin{array}{l} 0, \qquad \qquad \qquad \qquad \quad  x \leq -8 \\ x*sigmoidLUT(x), -8 < x < 8 \\ x, \qquad \qquad \qquad \qquad \quad  x \geq 8 \end{array} \right.$'
+    ))
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=16, frameon=True)  # Place legend below the plot
+    plt.tight_layout()  # Adjust layout to prevent stretching
+    plt.show()
+
+
+def getDyTTableValues() -> tuple[List[float], List[float]]:
+    outX = []
+    outY = []
+    for j in np.arange(-3.9375, 4.00000, 0.0625): # -3.9375 inclusive, 4.0000 exclusive
+        DyT_float = round(math.tanh(j), 6)
+        # Convert float32 to 4-byte representation (big-endian)
+        DyT_bytes = struct.pack('>f', np.float32(DyT_float))
+        # Take the first 2 bytes (most significant bits) for BF16
+        DyT_bf16_bytes = DyT_bytes[:2]
+        # Convert to bit string
+        DyT_bf16_bits = ''.join(f'{byte:08b}' for byte in DyT_bf16_bytes)
+        # Convert the bf16 back to its float representation
+        DyT_bf16_int = int(DyT_bf16_bits, 2) << 16  # Shift back to 32-bit float position
+        DyT_bf16_float = struct.unpack('>f', struct.pack('>I', DyT_bf16_int))[0]
+        outX.append(j)
+        outY.append(DyT_bf16_float) # append the silu_bf16_float value
+    return outX, outY
+
+
+def visualizeDyTAndApprox():
+    DyT_plot = plt.figure(figsize=(10, 8)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    plt.title("Dynamic Tanh function and approximation", fontsize=18)
+    # set the x and y limits
+    xmin = -5
+    xmax = 5
+    ymin = -2
+    ymax = 2
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xlabel("α*x", fontsize=16) # linear x and y axes
+    plt.ylabel("y", fontsize=16)
+    plt.grid()
+    # show more gridlines
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax, 1), fontsize=14)
+
+    colors = ['k', 'r', 'blue'] # black, red, green
+
+    # real DyT: we use x to represent α*x
+    x = np.linspace(xmin, xmax, 1000) # start, stop, num
+    exact_DyT = np.tanh(x)
+    plt.plot(x, exact_DyT, label='exact DyT', color=colors[0], linestyle='-', linewidth=2)
+
+    # DyT approximation: piecewise linear function
+    # for x<=-4, y=-1
+    # for -4<x<4, y=one of 128 values out of a LookUpTable: just plot these values as points
+    # for x>=4, y=+1
+    outX, outY = getDyTTableValues()
+
+    approx_DyT = np.piecewise(x, [x < -4, (x >= -4) & (x < 4), x >= 4], [-1, lambda x: np.nan, lambda x: 1]) # use np.nan for -4<x<4
+    plt.plot(outX, outY, '.', color=colors[1], markersize=3.6)
+    plt.plot(x, approx_DyT, label='DyT(α*x) = -1 for α*x <= -4; one of 128 look-up-table values for -4 < α*x < 4; +1 for α*x >= 4', color=colors[1], linestyle='-')  # Combine labels into one
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.10), ncol=1, fontsize=13)  # Place legend below the plot
+    plt.tight_layout()  # Adjust layout to prevent stretching
+    plt.show()
+
+
+def visualizeGELUAndSiLU():
+    plot = plt.figure(figsize=(12, 10)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    xmin = -4
+    xmax = 4
+    ymin = -4
+    ymax = 4
+
+    ax = plt.gca()
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xticks(np.arange(xmin, xmax+0.5, 0.5), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax+0.5, 0.5), fontsize=14)
+
+    colors = ['k', 'grey']
+
+    # real SiLU
+    x = np.linspace(xmin, xmax, 1000)
+    exact_silu = x / (1 + np.exp(-x))
+    plt.rcParams['text.usetex'] = True
+    ax.plot(x, exact_silu, label=r'SiLU', color=colors[0], linestyle='--', linewidth=1.5)
+
+    # real GELU
+    exact_gelu = x * 0.5 * (1 + erf(x / np.sqrt(2)))
+    ax.plot(x, exact_gelu, label='GELU', color=colors[1], linestyle='-', linewidth=2)
+
+    # Move spines to center
+    ax.spines['left'].set_position('center')
+    ax.spines['bottom'].set_position('center')
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+
+    # Make axes arrows (ensure arrow tips are visible within figure bounds)
+    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    # Use slightly less than the axis limits for arrow tips
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+
+    # Place axis labels at arrow tips, just inside the bounds
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.25), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=16, fontweight='bold', clip_on=False)
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    # visualizeSiLUAndApprox()
+    # visualizeGELUAndApprox()
+    # visualizeDyTAndApprox()
+    visualizeGELUAndSiLU()
