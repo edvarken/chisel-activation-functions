@@ -155,10 +155,10 @@ def printIndices(intBits=2, fracBits=4):
 
 if __name__ == "__main__":
     # printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4)
-    # printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=128)
+    printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=32)
 
     # printIndexedSiluTableSimple()
 
-    printOrderedIndexedFunctionTableInChiselSyntax(function="gelu", intBits=3, fracBits=6)
+    # printOrderedIndexedFunctionTableInChiselSyntax(function="gelu", intBits=3, fracBits=6)
     
     # printIndices(intBits=2, fracBits=4)
