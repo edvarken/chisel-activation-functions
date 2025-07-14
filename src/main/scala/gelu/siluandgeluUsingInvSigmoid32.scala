@@ -203,6 +203,6 @@ object siluandgeluUsingInvSigmoid32Main extends App {
     ChiselStage.emitSystemVerilogFile(
         new siluandgeluUsingInvSigmoid32,
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
-        args = Array("--target-dir", "generated")
+        args = Array("--target-dir", "generated2")
     )
 }

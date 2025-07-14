@@ -49,10 +49,10 @@ class silu extends Module {
  * Generate Verilog sources and save it in generated/silu.v
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  */
-// object silu extends App {
-//     ChiselStage.emitSystemVerilogFile(
-//         new silu,
-//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
-//         args = Array("--target-dir", "generated")
-//     )
-// }
+object siluMain extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new silu,
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated2")
+    )
+}
