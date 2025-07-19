@@ -4,6 +4,7 @@ import struct
 from typing import List
 import torch
 
+#### the MSE used in the text is calculated using sbt tests, not with this python file ####
 
 """
 Calculate the Mean Squared Error (MSE) between the exact GELU and the approximated GELU values in the range -6 <= x <= 6

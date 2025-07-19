@@ -3,6 +3,7 @@ import numpy as np
 import struct
 from typing import List
 
+#### the MSE used in the text is calculated using sbt tests, not with this python file ####
 
 def relu6(x):
     return np.maximum(0, np.minimum(6, x))

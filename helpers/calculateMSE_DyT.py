@@ -3,6 +3,7 @@ import numpy as np
 import struct
 from typing import List
 
+#### the MSE used in the text is calculated using sbt tests, not with this python file ####
 
 """
 Calculate the Mean Squared Error (MSE) between the exact tanh() and the approximated DyT values in the range -6 <= x <= 6
