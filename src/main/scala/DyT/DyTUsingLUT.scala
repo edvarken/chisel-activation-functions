@@ -76,14 +76,14 @@ class DyTUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
 }
 
 /**
- * Generate Verilog sources and save it in generated/DyTUsingLUT.v
+ * Generate Verilog sources and save it in generated2/DyTUsingLUT.v
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change intBits,fracBits to generate for other configurations
  */
-// object DyTUsingLUTMain extends App {
-//     ChiselStage.emitSystemVerilogFile(
-//         new DyTUsingLUT(intBits = 3, fracBits = 5),
-//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
-//         args = Array("--target-dir", "generated")
-//     )
-// }
+object DyTUsingLUTMain extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new DyTUsingLUT(intBits = 3, fracBits = 6),
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated2")
+    )
+}

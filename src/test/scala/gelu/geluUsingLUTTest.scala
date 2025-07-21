@@ -15,7 +15,7 @@ import math.sqrt
 class geluUsingLUTTest extends AnyFreeSpec with Matchers {
     var verbose = 0 
     var max_test_value = 8.0f
-    var N = 300
+    var N = 100
     println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
     "geluUsingLUTTest should correctly apply an approximate GELU value using a Lookup Table with 128 entries for [-4, 4] on BF16 input numbers" in {
         simulate(new geluUsingLUT(intBits = 2, fracBits = 4)) { c =>
@@ -24,12 +24,16 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
 
-            c.io.in_a.poke("b1_00000000_0000000".U(16.W)) // BF16 are the upper 16 bits of a 32-bit float
+            c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
+
             var mse = 0.0f // mean squared error accumulator
-            for (_ <- 0 until N) {
-                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value // [0,1]*14-7: -7 to 7
+            var mse_MAE = 0.0f // mean absolute error accumulator
+            var max_AE = 0.0f // keeps track of maximum absolute error
+            val step = (2*max_test_value) / N
+            var a = -max_test_value
+            while (a <= max_test_value) { // N uniformly spaced inputs in [-8,8]
                 val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, so & 0xFFFF is here only for clarity
                 c.io.in_a.poke(a_upper16bits)
                 c.clock.step(1) // 1cc latency due to output Register in geluUsingLUT.scala
@@ -47,9 +51,17 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println("###########")
                 }
                 mse += diff * diff
+                if (diff.abs > max_AE) {
+                    max_AE = diff.abs
+                }
+                mse_MAE += diff.abs
+                a += step
             }
-            mse /= N.toFloat    
-            println(f"GELU LUT (128 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            mse /= N.toFloat
+            mse_MAE /= N.toFloat
+            println(f"GELU LUT (128 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
+            println(f"GELU LUT (128 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
+            println(f"GELU LUT (128 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
         }
     }
 
@@ -63,14 +75,20 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
             c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
-            var mse = 0.0f
-            for (_ <- 0 until N) {
-                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
-                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+
+            var mse = 0.0f // mean squared error accumulator
+            var mse_MAE = 0.0f // mean absolute error accumulator
+            var max_AE = 0.0f
+            val step = (2*max_test_value) / N
+            var a = -max_test_value
+            while (a <= max_test_value) { // N uniformly spaced inputs in [-8,8]
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, so & 0xFFFF is here only for clarity
                 c.io.in_a.poke(a_upper16bits)
-                c.clock.step(1)
+                c.clock.step(1) // 1cc latency due to output Register in geluUsingLUT.scala
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -81,9 +99,17 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println("###########")
                 }
                 mse += diff * diff
+                if (diff.abs > max_AE) {
+                    max_AE = diff.abs
+                }
+                mse_MAE += diff.abs
+                a += step
             }
-            mse /= N.toFloat    
-            println(f"GELU LUT (256 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            mse /= N.toFloat
+            mse_MAE /= N.toFloat
+            println(f"GELU LUT (256 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
+            println(f"GELU LUT (256 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
+            println(f"GELU LUT (256 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
         }
     }
 
@@ -97,14 +123,20 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
             c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
-            var mse = 0.0f
-            for (_ <- 0 until N) {
-                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
-                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+
+            var mse = 0.0f // mean squared error accumulator
+            var mse_MAE = 0.0f // mean absolute error accumulator
+            var max_AE = 0.0f
+            val step = (2*max_test_value) / N
+            var a = -max_test_value
+            while (a <= max_test_value) { // N uniformly spaced inputs in [-8,8]
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, so & 0xFFFF is here only for clarity
                 c.io.in_a.poke(a_upper16bits)
-                c.clock.step(1)
+                c.clock.step(1) // 1cc latency due to output Register in geluUsingLUT.scala
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -115,30 +147,44 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println("###########")
                 }
                 mse += diff * diff
+                mse_MAE += diff.abs
+                if (diff.abs > max_AE) {
+                    max_AE = diff.abs
+                }
+                a += step
             }
-            mse /= N.toFloat    
-            println(f"GELU LUT (512 entries for [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            mse /= N.toFloat
+            mse_MAE /= N.toFloat
+            println(f"GELU LUT (512 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
+            println(f"GELU LUT (512 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
+            println(f"GELU LUT (512 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
         }
     }
 
     "geluUsingLUTTest should correctly apply an approximate GELU value using a Lookup Table with 256 entries for [-8, 8] on BF16 input numbers" in {
         simulate(new geluUsingLUT(intBits = 3, fracBits = 4)) { c =>
             var tolerance = 0.015625f*8
-            c.io.in_a.poke("b0_00000000_0000000".U(16.W)) // BF16 are the upper 16 bits of a 32-bit float
+            c.io.in_a.poke("b0_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
 
-            c.io.in_a.poke("b1_00000000_0000000".U(16.W)) // BF16 are the upper 16 bits of a 32-bit float
+            c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
-            var mse = 0.0f
-            for (_ <- 0 until N) {
-                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
-                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+
+            var mse = 0.0f // mean squared error accumulator
+            var mse_MAE = 0.0f // mean absolute error accumulator
+            var max_AE = 0.0f
+            val step = (2*max_test_value) / N
+            var a = -max_test_value
+            while (a <= max_test_value) { // N uniformly spaced inputs in [-8,8]
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, so & 0xFFFF is here only for clarity
                 c.io.in_a.poke(a_upper16bits)
-                c.clock.step(1)
+                c.clock.step(1) // 1cc latency due to output Register in geluUsingLUT.scala
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -149,9 +195,17 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println("###########")
                 }
                 mse += diff * diff
+                if (diff.abs > max_AE) {
+                    max_AE = diff.abs
+                }
+                mse_MAE += diff.abs
+                a += step
             }
-            mse /= N.toFloat    
-            println(f"GELU LUT (256 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            mse /= N.toFloat
+            mse_MAE /= N.toFloat
+            println(f"GELU LUT (256 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
+            println(f"GELU LUT (256 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
+            println(f"GELU LUT (256 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
         }
     }
 
@@ -165,14 +219,20 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
             c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
-            var mse = 0.0f
-            for (_ <- 0 until N) {
-                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
-                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+
+            var mse = 0.0f // mean squared error accumulator
+            var mse_MAE = 0.0f // mean absolute error accumulator
+            var max_AE = 0.0f // keeps track of maximum absolute error
+            val step = (2*max_test_value) / N
+            var a = -max_test_value
+            while (a <= max_test_value) { // N uniformly spaced inputs in [-8,8]
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, so & 0xFFFF is here only for clarity
                 c.io.in_a.poke(a_upper16bits)
-                c.clock.step(1)
+                c.clock.step(1) // 1cc latency due to output Register in geluUsingLUT.scala
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -183,9 +243,17 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println("###########")
                 }
                 mse += diff * diff
+                if (diff.abs > max_AE) {
+                    max_AE = diff.abs
+                }
+                mse_MAE += diff.abs
+                a += step
             }
-            mse /= N.toFloat    
-            println(f"GELU LUT (512 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            mse /= N.toFloat
+            mse_MAE /= N.toFloat
+            println(f"GELU LUT (512 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
+            println(f"GELU LUT (512 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
+            println(f"GELU LUT (512 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
         }
     }
 
@@ -199,14 +267,20 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
             c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
-            var mse = 0.0f
-            for (_ <- 0 until N) {
-                val a = scala.util.Random.nextFloat() * 2*max_test_value - max_test_value
-                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
+
+            var mse = 0.0f // mean squared error accumulator
+            var mse_MAE = 0.0f // mean absolute error accumulator
+            var max_AE = 0.0f // keeps track of maximum absolute error
+            val step = (2*max_test_value) / N
+            var a = -max_test_value
+            while (a <= max_test_value) { // N uniformly spaced inputs in [-8,8]
+                val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W) // .U(16.W) already only the keeps the lower 16 bits, so & 0xFFFF is here only for clarity
                 c.io.in_a.poke(a_upper16bits)
-                c.clock.step(1)
+                c.clock.step(1) // 1cc latency due to output Register in geluUsingLUT.scala
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
+                // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
+                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -217,9 +291,17 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println("###########")
                 }
                 mse += diff * diff
+                if (diff.abs > max_AE) {
+                    max_AE = diff.abs
+                }
+                mse_MAE += diff.abs
+                a += step
             }
-            mse /= N.toFloat    
-            println(f"GELU LUT (1024 entries for [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            mse /= N.toFloat
+            mse_MAE /= N.toFloat
+            println(f"GELU LUT (1024 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
+            println(f"GELU LUT (1024 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
+            println(f"GELU LUT (1024 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
         }
     }
 }

@@ -65,7 +65,7 @@ class geluUsingLUT(val intBits: Int = 2, val fracBits: Int = 4) extends Module {
  */
 object geluUsingLUTMain extends App {
     ChiselStage.emitSystemVerilogFile(
-        new geluUsingLUT(intBits = 3, fracBits = 6), // Change intBits and fracBits as needed
+        new geluUsingLUT(intBits = 2, fracBits = 6), // Change intBits and fracBits as needed
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
         args = Array("--target-dir", "generated2")
     )
