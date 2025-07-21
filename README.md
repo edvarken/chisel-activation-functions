@@ -18,33 +18,25 @@ The analytic function to approximate is `SiLU(x) = x / (1+exp(-x))`.
 <img src="img/exactSiluand2Approximations.png" alt="SiLU and Approximations" width="500"/>
 
 *Figure 1: Visualization of SiLU and the two approximative versions*
+
 ### SiLU Version 1
-Version 1 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU1(x) = x * ReLU6(x+3) / 6`.
-
-<img src="img/silu1_diagramZoomed180.png" alt="SiLU1" width="300"/>
-
-*Figure 2: Diagram of SiLU version 1*
-
-This approximation uses a BF16 Adder and two Multipliers. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
-
-### SiLU Version 2
-Version 2 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a piecewise function to approximate the SiLU function. Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
+Version 1 is described in `src/main/scala/silu/siluUsingLUT.scala` and uses a lookup-table (LUT) that directly stores output values. Multiple flavours of this version exist however. The range where the LUT is used can be set to (-4, 4) or (-8, 8). The amount of entries in the LUT is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the LUT are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
 
 | Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
 |-----------|----------------|-------------|-------------------------------------------|
-| SiLU2a(x) | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
-| SiLU2b(x) | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
-| SiLU2c(x) | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
-| SiLU2d(x) | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
-| SiLU2e(x) | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
-| SiLU2f(x) | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
+| SiLU1a(x) | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
+| SiLU1b(x) | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
+| SiLU1c(x) | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
+| SiLU1d(x) | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| SiLU1e(x) | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| SiLU1f(x) | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
 
-For x values below the LUT range the output is `SiLU2(x)=0`, for x values above the LUT range the output equals the input `SiLU2(x)=x`.
+For x values below the LUT range the output is `SiLU2(x)=0`, for x values above the LUT range the output equals the input `SiLU1(x)=x`.
 
 `siluUsingLUT.scala` has only 1 cycle latency for the SiLU approximation.
 
-### SiLU Version 3
-Version 3 uses an inverted LUT method for the sigmoid function, to implement `SiLU3(x) = x * sigmoid(x)` in the range (-8,8). Outside that range, the output is clipped to 0 or x. The inverted LUT stores the inputs to the corresponding uniformly spaced sigmoid y-values between [0.5, 1.0]. This means the stored inputs are non-uniformly spaced.
+### SiLU Version 2
+Version 2 uses an inverted LUT method for the sigmoid function, to implement `SiLU3(x) = x * sigmoid(x)` in the range (-8,8). Outside that range, the output is clipped to 0 or x. The inverted LUT stores the inputs to the corresponding uniformly spaced sigmoid y-values between [0.5, 1.0]. This means the stored inputs are non-uniformly spaced.
 The sigmoid can then be approximated using a linear interpolation of the index: `y = 0.5 +- (index/32)*0.5`, here using 32 entries. For inputs in the negative range (-8,0), we make use of the following property of sigmoid: `sigmoid(x) = 1-sigmoid(-x)`, which enables us to reuse the same LUT entries as for the positive range (0,8).
 This implementation uses 5 comparators to find the index of the stored input closest to the incoming input. It also uses a BF16 multiplier to multiply the input with the sigmoid, and a BF16 subtractor for negative inputs. The subtractor is pipelined and has 3 cycles latency, the multiplier has one cycle latency, with two pipeline registers storing the index and the sigmoid, this totals 6 cycles latency for the SiLU approximation, but this latency is hidden thanks to the pipeline registers.
 
@@ -54,22 +46,31 @@ This implementation uses 5 comparators to find the index of the stored input clo
 | InvSigmoidb(y) | 0.5 < y < 1.0             | 64          |
 | InvSigmoidc(y) | 0.5 < y < 1.0             | 128         |
 
+### SiLU Version 3
+Version 3 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU3(x) = x * ReLU6(x+3) / 6`.
+
+<img src="img/silu1_diagramZoomed180.png" alt="SiLU3" width="300"/>
+
+*Figure 2: Diagram of SiLU version 3*
+
+This approximation uses a BF16 Adder and two Multipliers. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
+
 ### Comparing the SiLU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) is calculated using 300 random sample points in the range -8 to 8. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
+The mean squared error(MSE) is calculated using 100 uniformly spaced sample points in the range -8 to 8. It shows how well the approximation fits the exact SiLU function, where a lower MSE is better.
 
 | Function  | MSE            | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) |
 |-----------|----------------|-------|------------------|--------------|--------------------------|
-| SiLU1(x)  | 4.86e-3        | 602   | 1758.40          | 0.620901     | 2196                     |
-| SiLU2a(x) | 5.85e-4        | 357   | 581.00           | 0.090799     | 991                      |
-| SiLU2b(x) | 5.04e-4        | 593   | 912.80           | 0.117809     | 1027                     |
-| SiLU2c(x) | 4.64e-4        | 933   | 1388.24          | 0.144966     | 1266                     | 
-| SiLU2d(x) | 3.37e-4        | 589   | 903.28           | 0.117763     | 1015                     | 
-| SiLU2e(x) | 6.41e-5        | 939   | 1398.04          | 0.144768     | 1012                     | 
-| SiLU2f(x) | 2.29e-5        | 1279  | 1912.12          | 0.180970     | 1366                     | 
-| SiLU3a(x) | 3.67e-3        | 627   | 1495.48          | 0.497005     | 1647                     | 
-| SiLU3b(x) | 7.67e-4        | 746   | 1722.56          | 0.575143     | 1788                     |
-| SiLU3c(x) | 4.79e-4        | 886   | 1956.64          | 0.599856     | 1875                     |
+| SiLU1a(x) | 90ee-4         | 357   | 581.00           | 0.090799     | 991                      |
+| SiLU1b(x) | 4.79e-4        | 593   | 912.80           | 0.117809     | 1027                     |
+| SiLU1c(x) | 4.36e-4        | 933   | 1388.24          | 0.144966     | 1266                     | 
+| SiLU1d(x) | 3.94e-4        | 589   | 903.28           | 0.117763     | 1015                     | 
+| SiLU1e(x) | 6.81e-5        | 939   | 1398.04          | 0.144768     | 1012                     | 
+| SiLU1f(x) | 2.51e-5        | 1279  | 1912.12          | 0.180970     | 1366                     | 
+| SiLU2a(x) | 3.52e-3        | 627   | 1495.48          | 0.497005     | 1647                     | 
+| SiLU2b(x) | 7.97e-4        | 746   | 1722.56          | 0.575143     | 1788                     |
+| SiLU2c(x) | 4.50e-4        | 886   | 1956.64          | 0.599856     | 1875                     |
+| SiLU3(x)  | 4.86e-3        | 602   | 1758.40          | 0.620901     | 2196                     |
 
 ### Fitting the SiLU hardware module into the Gemmini accelerator platform
 This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, we place 16 SiLU hardware units in parallel, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
@@ -109,19 +110,19 @@ This implementation uses 5 comparators to find the index of the stored input clo
 
 ### Comparing the GELU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) is calculated using 300 random sample points in the range -8 to 8. It shows how well the approximation fits the exact GELU function, where a lower MSE is better.
+The mean squared error(MSE) is calculated using 100 random sample points in the range -8 to 8. It shows how well the approximation fits the exact GELU function, where a lower MSE is better.
 
 | Function  | MSE        | Cells | Area (um^2) | Power (mW) | Critical path delay (ps) |
 |-----------|------------|-------|-------------|------------|--------------------------|
-| GELU1a(x) | 1.95e-4    | 401   | 642.04      | 0.101190   | 1068                     |
-| GELU1b(x) | 4.08e-5    | 620   | 946.68      | 0.125680   | 1086                     |
-| GELU1c(x) | 7.86e-6    | 899   | 1371.16     | 0.149521   | 1194                     |
-| GELU1d(x) | 3.91e-4    | 522   | 796.60      | 0.111748   | 1058                     |
-| GELU1e(x) | 4.83e-5    | 788   | 1204.28     | 0.140249   | 1024                     |
-| GELU1f(x) | 6.75e-6    | 1120  | 1695.68     | 0.175198   | 1287                     |
-| GELU2a(x) | 9.37e-4    | 627   | 1495.48     | 0.497005   | 1647                     |
-| GELU2b(x) | 3.25e-4    | 746   | 1722.56     | 0.575143   | 1788                     |
-| GELU2c(x) | 2.55e-4    | 886   | 1956.64     | 0.599856   | 1875                     |
+| GELU1a(x) | 2.70e-4    | 401   | 642.04      | 0.101190   | 1068                     |
+| GELU1b(x) | 4.99e-5    | 620   | 946.68      | 0.125680   | 1086                     |
+| GELU1c(x) | 8.31e-6    | 899   | 1371.16     | 0.149521   | 1194                     |
+| GELU1d(x) | 3.97e-4    | 522   | 796.60      | 0.111748   | 1058                     |
+| GELU1e(x) | 4.99e-5    | 788   | 1204.28     | 0.140249   | 1024                     |
+| GELU1f(x) | 8.31e-6    | 1120  | 1695.68     | 0.175198   | 1287                     |
+| GELU2a(x) | 1.03e-3    | 627   | 1495.48     | 0.497005   | 1647                     |
+| GELU2b(x) | 3.38e-4    | 746   | 1722.56     | 0.575143   | 1788                     |
+| GELU2c(x) | 2.76e-4    | 886   | 1956.64     | 0.599856   | 1875                     |
 
 The area for GELU2a/b/c and SiLU3a/b/c is shared since they use the same inverted Sigmoid LUT.
 
@@ -145,23 +146,27 @@ DyTUsingLUT.scala has 3 cycles latency for the DyT approximation, but can work i
 ### Multiple Dynamic Tanh versions
 Multiple flavours of this version exist however. The range where the lookup-table is used can be set to (-4, 4) or (-8, 8). The amount of entries in the lookup-table is configurable, where more entries correspond to more samplepoints per range, leading to a more detailed approximation. Entries in the lookup-table are chosen using an index. This index consists of 1 signBit concatenated with intBits and fracBits. The four flavours are listed below from least to most LUT entries.
 
-| Function  | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
-|-----------|----------------|-------------|-------------------------------------------|
-| DyT1(x)   | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
-| DyT2(x)   | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
-| DyT3(x)   | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
-| DyT4(x)   | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| Function   | LUT Range      | LUT Entries | LUT index: (signBit; #intBits; #fracBits) |
+|------------|----------------|-------------|-------------------------------------------|
+| DyT1a(x)   | -4 < x < 4     | 128         | (signbit; 2; 4)                           |
+| DyT1b(x)   | -4 < x < 4     | 256         | (signbit; 2; 5)                           |
+| DyT1c(x)   | -4 < x < 4     | 512         | (signbit; 2; 6)                           |
+| DyT1d(x)   | -8 < x < 8     | 256         | (signbit; 3; 4)                           |
+| DyT1e(x)   | -8 < x < 8     | 512         | (signbit; 3; 5)                           |
+| DyT1f(x)   | -8 < x < 8     | 1024        | (signbit; 3; 6)                           |
 
 ### Comparing the Dynamic Tanh versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
-The mean squared error(MSE) of every approximation versus the exact dynamic tanh function is calculated using 300 random sample points in the range -8 to 8. It shows how well the approximation fits the exact dynamic tanh function, where a lower MSE is better.
+The mean squared error(MSE) of every approximation versus the exact dynamic tanh function is calculated using 100 random sample points in the range -8 to 8. It shows how well the approximation fits the exact dynamic tanh function, where a lower MSE is better.
 
-| Function  | MSE            | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) |
-|-----------|----------------|-------|------------------|--------------|--------------------------|
-| Dyt1(x)   | 3.20e-4        | 428   | 1069.60          | 0.355952     | 1112                     |
-| DyT2(x)   | 7.37e-5        | 497   | 1172.08          | 0.387214     | 1112                     |
-| DyT3(x)   | 3.09e-4        | 464   | 1120.00          | 0.385373     | 1114                     |
-| DyT4(x)   | 9.16e-5        | 523   | 1212.96          | 0.404407     | 1112                     |
+| Function  | MSE           | Cells | Area (um^2)      | Power (mW)   | Critical path delay (ps) |
+|-----------|---------------|-------|------------------|--------------|--------------------------|
+| Dyt1a(x)  | 3.72e-4       | 428   | 1069.60          | 0.355952     | 1112                     |
+| DyT1b(x)  | 7.56e-5       | 497   | 1172.08          | 0.387214     | 1112                     |
+| DyT1c(x)  | 2.63e-5       | 597   | 1296.96          | 0.401081     | 1114                     |
+| DyT1d(x)  | 2.93e-4       | 464   | 1120.00          | 0.385373     | 1114                     |
+| DyT1e(x)  | 8.13e-5       | 523   | 1212.96          | 0.404407     | 1112                     |
+| DyT1f(x)  | 9.24e-5       | 601   | 1309.28          | 0.424083     | 1114                     |
 
 ### Fitting the Dynamic Tanh hardware module into the Gemmini accelerator platform
 The dynamic hyperbolic tangent function replaces the LayerNorm normalization. Instead of requiring multiple passes across the channel dimension, a single application of the dynamic tanh activation is used. Each spatial element (height and width) has its own alpha factor, which is shared across the channels, approximating the LayerNorm. Since the module takes both alpha and the tensor's element as inputs, we can just place 16 DyT modules in parallel to match the systolic array bandwidth.
