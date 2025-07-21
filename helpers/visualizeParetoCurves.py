@@ -29,10 +29,10 @@ GELU_DATA = {
 DYT_DATA = {
     "DyT1a":  {"MSE": 3.72e-4,  "area": 1069.60, "color": "#366FC0", "marker": '*'},
     "DyT1b":  {"MSE": 7.56e-5,  "area": 1172.08, "color": "#366FC0", "marker": '*'},
-    "DyT1c":  {"MSE": 2.63e-5,  "area": 0000.00, "color": "#366FC0", "marker": '*'}, # TODO area
+    "DyT1c":  {"MSE": 2.63e-5,  "area": 1296.96 , "color": "#366FC0", "marker": '*'},
     "DyT1d":  {"MSE": 2.93e-4,  "area": 1120.00, "color": "#366FC0", "marker": '*'},
     "DyT1e":  {"MSE": 8.13e-5,  "area": 1212.96, "color": "#366FC0", "marker": '*'},
-    "DyT1f":  {"MSE": 9.24e-5,  "area": 0000.00, "color": "#366FC0", "marker": '*'}, # TODO area
+    "DyT1f":  {"MSE": 9.24e-5,  "area": 1309.28, "color": "#366FC0", "marker": '*'},
 }
 
 def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.005, n_yticks=21):
