@@ -1,6 +1,7 @@
 package silu
 import chisel3._
 import chisel3.util._ // needed for Cat()
+import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilogFile
 
 class MantissaRounder(val n: Int) extends Module {
     val io = IO(new Bundle {
@@ -72,4 +73,16 @@ class FPMult(val n: Int) extends Module { // single-cycle pipeline latency
 class FPMult16ALT extends FPMult(16) {} // BF16
 class FPMult32 extends FPMult(32) {}
 class FPMult64 extends FPMult(64) {}
+
+/**
+ * Generate Verilog sources and save it in generated/FPMult16ALT.v
+ * Uncomment to generate the SystemVerilog file when using 'sbt run'
+ */
+object FPMultMain extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new FPMult16ALT,
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated2")
+    )
+}
 

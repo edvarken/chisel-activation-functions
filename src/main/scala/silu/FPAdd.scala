@@ -2,7 +2,7 @@ package silu
 import chisel3._
 import chisel3.util._ // needed for Cat()
 // _root_ disambiguates from package chisel3.util.circt if user imports chisel3.util._
-// import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilogFile
 
 import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantWidths,
                    floatAdd, doubleAdd}
@@ -250,4 +250,17 @@ class FPAdd(val n: Int) extends Module { // Adder with three cycle pipeline late
 class FPAdd16ALT extends FPAdd(16) {} // BF16
 class FPAdd32 extends FPAdd(32) {}
 class FPAdd64 extends FPAdd(64) {}
+
+
+/**
+ * Generate Verilog sources and save it in generated/FPAdd16ALT.v
+ * Uncomment to generate the SystemVerilog file when using 'sbt run'
+ */
+object FPAddMain extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new FPAdd16ALT,
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+        args = Array("--target-dir", "generated2")
+    )
+}
 

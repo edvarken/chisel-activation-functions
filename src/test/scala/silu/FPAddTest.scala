@@ -22,9 +22,17 @@ class FPAdd16Test extends AnyFreeSpec with Matchers {
             def randFloat(): Float = {
                 scala.util.Random.nextFloat() * 10000.0f - 5000.0f
             }
-
             def randFloatSmallerNumbers(): Float = {
                 scala.util.Random.nextFloat() * 100.0f - 50.0f
+            }
+            def randFloatEvenSmallerNumbers(): Float = {
+                scala.util.Random.nextFloat() * 5.0f - 2.5f
+            }
+            def randFloatEvenSmallerSmallerNumbers(): Float = {
+                scala.util.Random.nextFloat() * 1.0f - 0.5f
+            }
+            def randFloatEvenSmallerSmallerSmallerNumbers(): Float = {
+                scala.util.Random.nextFloat() * 0.01f - 0.005f
             }
 
             for (_ <- 0 until 20) { // prepare 20 additions and their results in two queues
@@ -36,6 +44,24 @@ class FPAdd16Test extends AnyFreeSpec with Matchers {
             for (_ <- 0 until 20) { // prepare 20 more additions and their results in two queues
                 val a = randFloatSmallerNumbers()
                 val b = randFloatSmallerNumbers()
+                inputsQueue.enqueue((a, b)) // adds to the rear of the queue(=FIFO)
+                expectedQueue.enqueue(Some(floatAdd(a, b)))
+            }
+            for (_ <- 0 until 20) { // prepare 20 more additions and their results in two queues
+                val a = randFloatEvenSmallerNumbers()
+                val b = randFloatEvenSmallerNumbers()
+                inputsQueue.enqueue((a, b)) // adds to the rear of the queue(=FIFO)
+                expectedQueue.enqueue(Some(floatAdd(a, b)))
+            }
+            for (_ <- 0 until 20) { // prepare 20 more additions and their results in two queues
+                val a = randFloatEvenSmallerSmallerNumbers()
+                val b = randFloatEvenSmallerSmallerNumbers()
+                inputsQueue.enqueue((a, b)) // adds to the rear of the queue(=FIFO)
+                expectedQueue.enqueue(Some(floatAdd(a, b)))
+            }
+            for (_ <- 0 until 20) { // prepare 20 more additions and their results in two queues
+                val a = randFloatEvenSmallerSmallerSmallerNumbers()
+                val b = randFloatEvenSmallerSmallerSmallerNumbers()
                 inputsQueue.enqueue((a, b)) // adds to the rear of the queue(=FIFO)
                 expectedQueue.enqueue(Some(floatAdd(a, b)))
             }

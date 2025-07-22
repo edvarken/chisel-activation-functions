@@ -77,6 +77,24 @@ class FPMult16Test extends AnyFreeSpec with Matchers {
                 assert(math.abs(actual_value - expected) < max_diff, s"Expected ${toBinary(floatToBigIntBF16(lastExpected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
                 println(f"expected: ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)}, actual: ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
             }
+            for (_ <- 0 until 20) {
+                val a = scala.util.Random.nextFloat() * 0.1f - 0.05f
+                val b = scala.util.Random.nextFloat() * 0.1f - 0.05f
+                val expected = a * b
+                val expected_exponent = math.floor(math.log(math.abs(expected))/math.log(2)).toInt
+                val max_diff = math.pow(2, expected_exponent-5).toFloat
+                c.io.a.poke(floatToBigIntBF16(a).U)
+                c.io.b.poke(floatToBigIntBF16(b).U)
+                c.clock.step(1)
+
+                // c.io.res is 1 or 2 bits off mostly
+                // Largest possible error when truncating FP32 to BF16 is ~ 1E36= 2^127*2^-8! Instead check for exponent being right.
+                val actual_value = java.lang.Float.intBitsToFloat((BigInt(c.io.res.peek().litValue.toInt) << 16).toInt)
+                println(f"actual_value: ${actual_value}")
+                println(f"expected: ${expected}")
+                assert(math.abs(actual_value - expected) < max_diff, s"Expected ${toBinary(floatToBigIntBF16(lastExpected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
+                println(f"expected: ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)}, actual: ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
+            }
         }
     }
 }
