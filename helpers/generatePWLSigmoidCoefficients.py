@@ -105,7 +105,7 @@ if __name__ == "__main__":
     breakpointsEqualYsegmentsBF16 = [(0, 0.500000), (0.242188, 0.560253), (0.492188, 0.620622), (0.757812, 0.680879),
                                       (1.054688, 0.741674), (1.390625, 0.800692), (1.828125, 0.861538), (2.468750, 0.921922), (4.000000, 0.982014)]
     
-    breakpointsEqualXsegments = [(4, 0.982014), (5, 0.993307), (6,0.997527), (7,0.999089), (8,0.999665)]
+    breakpointsEqualXsegments = [(4, 0.982014), (5, 0.993307), (6, 0.997527), (7, 0.999089), (8, 0.999665)]
 
     FirstEightSegmentsDerivatives, FirstEightSegmentsYIntercepts = calculateSlopesAndYIntercepts(breakpointsEqualYsegmentsBF16)
     print("First 8 segments derivatives (equal y segments):", [round(m, 6) for m in FirstEightSegmentsDerivatives])

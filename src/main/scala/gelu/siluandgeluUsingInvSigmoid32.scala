@@ -52,7 +52,7 @@ class siluandgeluUsingInvSigmoid32 extends Module {
     val fpmult2 = Module(new FPMult16ALT)
     fpmult2.io.a := a // input x
     fpmult2.io.b := sigmoidReg // sigmoid value calculated from input x
-    io.out_a := fpmult2.io.res // SILU = x * sigmoid(x)
+    io.out_a := fpmult2.io.res // SILU = x * sigmoid(x), GELU = x * sigmoid(1.703125*x)
 
     when (a(14,0) === "b00000000_0000000".U ) { // in_a = +-0
         sigmoidReg := 0.U
