@@ -285,10 +285,14 @@ def visualizeGELUAndSiLU():
 def visualizeSigmoid():
     plt.figure(figsize=(12, 10)) 
     plt.rcParams["font.family"] = "Times New Roman"
-    xmin = -8
-    xmax = 8
-    ymin = -0.2
-    ymax = 1
+    # xmin = -8 # these were used for the invSigmoid plot
+    # xmax = 8
+    # ymin = -0.2
+    # ymax = 1
+    xmin = -4
+    xmax = 4
+    ymin = -4
+    ymax = 4
 
     ax = plt.gca()
     plt.xlim(xmin, xmax)
@@ -330,7 +334,6 @@ if __name__ == "__main__":
     # visualizeSiLUAndApprox()
     # visualizeGELUAndApprox()
     # visualizeDyTAndApprox()
-
 
     # visualizeGELUAndSiLU()
     visualizeSigmoid()

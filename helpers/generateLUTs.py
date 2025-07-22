@@ -18,7 +18,7 @@ def mantissaRounder(function_bytes):
     else:
         return rounded_function_bf16_bytes # else we can just truncate(=rounding down)
 
-def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, sigmoidInvEntries=32):
+def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, sigmoidEntries=32):
     error_tolerance = 0.032
     if intBits == 2 and fracBits == 4: # -4 to +4 with a step of 0.0625; 128 entries total
         error_tolerance = 0.016
@@ -29,6 +29,8 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
     elif intBits == 3 and fracBits == 5: # -8 to +8 with a step of 0.03125; 512 entries total
         error_tolerance = 0.0312
     if function == "sigmoidInv": # function_float is in the range (0, 8.0) with a non-uniform step!
+        error_tolerance = 0.0312 # 0.03125 for [4,8] range
+    if function == "sigmoid-uniform-y": # function_float is in the range (0, 8.0) with a non-uniform step!
         error_tolerance = 0.0312 # 0.03125 for [4,8] range
 
     step = float(pow(2, -fracBits))
@@ -42,12 +44,22 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
     elif function == "gelu":
         print("(j        index      gelu       gelu_bf16         gelu_bf16_float  error)")
     elif function == "sigmoidInv":
-        step = 0.5/(sigmoidInvEntries)  # step for sigmoidInv is 1/(sigmoidInvEntries*2) to cover the range (0.5, 1.0]
+        step = 0.5/(sigmoidEntries)  # step for sigmoidInv is 1/(sigmoidEntries*2) to cover the range (0.5, 1.0]
         max = 1.0
         min = 0.5+step
         print("(j        index      sigmoidInv    sigmoidInv_bf16     sigmoidInv_FP:3int.7frac  sigmoidInv_bf16_float   error)")
+    elif function == "sigmoid-uniform-y":
+        step = (0.98201379003-0.5)/(sigmoidEntries)  # 8 steps for equally spaced sigmoid output values in [0.5, 0.98201379003], corresponding to inputs in the range (0.5, 4.0]
+        max = 0.98201379003+step
+        min = 0.5
+        print("(j        index      sigmoid       sigmoid_bf16      sigmoid_FP:3int.7frac  sigmoid_bf16_float   error)")
+    elif function == "sigmoid-uniform-x":
+        step = (8.0-4.0)/(sigmoidEntries)
+        max = 8.0+step
+        min = 4.0
+        print("(j        index      sigmoid       sigmoid_bf16      sigmoid_FP:3int.7frac  sigmoid_bf16_float   error)")
     else:
-        raise ValueError("Unsupported function. Use 'silu', 'tanh', 'gelu', or 'sigmoidInv'.")
+        raise ValueError("Unsupported function. Use 'silu', 'tanh', 'gelu', 'sigmoidInv', 'sigmoid-uniform-y' or 'sigmoid-uniform-x'.")
     i = 0
     for j in np.arange(min, max, step): # from -3.9375 included up to 4.0 excluded with a step of 0.0625 for intBits=2 and fracBits=4
         if function == "silu":
@@ -58,13 +70,17 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
             # GELU approximation: x * 0.5 * (1 + math.tanh((math.sqrt(2 / math.pi) * (x + 0.044715 * x**3))))
             # exact GELU:
             function_float = round(j*0.5*(1+math.erf(j/math.sqrt(2))), (fracBits+intBits))
-        elif function == "sigmoidInv":
+        elif function == "sigmoidInv" or function == "sigmoid-uniform-y":
             # sigmoidInv: x = 1 / (1 + exp(-j)) => j = -log((1/x) - 1)
-            function_float = -math.log((1/j) - 1) # j is in the range (0.5, 1.0] with a step of 1/sigmoidInvEntries, while 
+            function_float = -math.log((1/j) - 1) # j is in the range (0.5, 1.0] with a step of 1/sigmoidEntries, while 
+            function_float = round(function_float, (4+3)) # function_float are corresponding 'inputs' in the range (0.0, 8.0) with a non-uniform step!
+            i += 1 # index starts from 1!
+        elif function ==  "sigmoid-uniform-x":
+            function_float = 1 / (1 + math.exp(-j))
             function_float = round(function_float, (4+3)) # function_float are corresponding 'inputs' in the range (0.0, 8.0) with a non-uniform step!
             i += 1 # index starts from 1!
         else:
-            raise ValueError("Unsupported function. Use 'silu', 'tanh', 'gelu', or 'sigmoidInv'.")
+            raise ValueError("Unsupported function. Use 'silu', 'tanh', 'gelu', 'sigmoidInv', 'sigmoid-uniform-y' or 'sigmoid-uniform-x'.")
 
         j_float = f"{j:.6f}" # round to 4 decimal places
         # Convert float32 to 4-byte representation (big-endian)
@@ -74,7 +90,7 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
         # Convert to bit string
         function_bf16_bits = ''.join(f'{byte:08b}' for byte in function_bf16_bytes)
         # convert the bf16 bits to an integer representation with 3 integer bits and 7 fractional bits
-        if function == "sigmoidInv":
+        if function == "sigmoidInv" or function == "sigmoid-uniform-y" or function == "sigmoid-uniform-x":
             # sigmoidInv_FP: 3 integer bits and 7 fractional bits
             sigmoidInv_FP = f"{int(function_float):03b}_{int((function_float - int(function_float)) * 2**7):07b}"
         # Convert the bf16 back to its float representation
@@ -86,7 +102,7 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
 
         frac_part = int(abs(j) * 2**fracBits) & ((1 << fracBits) - 1)
         # Print everything
-        if function == "sigmoidInv":
+        if function == "sigmoidInv" or function == "sigmoid-uniform-y" or function == "sigmoid-uniform-x":
             print(f"({j_float},    {i},       {function_float:.6f},     {function_bf16_bits},  {sigmoidInv_FP},              {function_bf16_float:.6f},              {diff:.4f})")
         else:
             print(f"({j_float}, {int(j < 0)}_{int(abs(j)):0{intBits}b}.{frac_part:0{fracBits}b}, {function_float:.6f}, {function_bf16_bits}, {function_bf16_float:.6f},       {diff:.4f})")
@@ -155,10 +171,14 @@ def printIndices(intBits=2, fracBits=4):
 
 if __name__ == "__main__":
     # printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4)
-    # printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidInvEntries=32)
+    # printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidEntries=32)
+
+    # To generate the two LUT tables with 8 and 4 segments, 12 segments total to calculate the coefficients for the sigmoid:
+    printIndexedFunctionTableExtensive(function="sigmoid-uniform-y", sigmoidEntries=8)
+    printIndexedFunctionTableExtensive(function="sigmoid-uniform-x", sigmoidEntries=4)
 
     # printIndexedSiluTableSimple()
 
-    printOrderedIndexedFunctionTableInChiselSyntax(function="tanh", intBits=3, fracBits=6)
+    # printOrderedIndexedFunctionTableInChiselSyntax(function="tanh", intBits=3, fracBits=6)
     
     # printIndices(intBits=2, fracBits=4)
