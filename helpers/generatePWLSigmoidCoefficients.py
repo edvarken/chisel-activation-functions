@@ -40,11 +40,11 @@ import numpy as np
 #         |*
 #  0.50 __|----------------------------------------------------------------
 #         0       1       2       3       4       5       6       7       8
-#                                         |       |       |       |       |
+#                                         |       |       |              
 #
 # 8 segments: equally spaced y-values between 0.500000 and 0.982014
-# 4 segments: equally spaced x-values between 4 and 8
-# each segment is linearly interpolated as y = m*x + q, using the local slope m and y-intercept q, which are saved in a LUT: storing 12*2=24 values
+# 2 segments: equally spaced x-values between 4 and 6
+# each segment is linearly interpolated as y = m*x + q, using the local slope m and y-intercept q, which are saved in a LUT: storing 10*2=20 values
 
 def calculateSlopesAndYIntercepts(breakpoints):
     slopes = []
@@ -105,15 +105,15 @@ if __name__ == "__main__":
     breakpointsEqualYsegmentsBF16 = [(0, 0.500000), (0.242188, 0.560253), (0.492188, 0.620622), (0.757812, 0.680879),
                                       (1.054688, 0.741674), (1.390625, 0.800692), (1.828125, 0.861538), (2.468750, 0.921922), (4.000000, 0.982014)]
     
-    breakpointsEqualXsegments = [(4, 0.982014), (5, 0.993307), (6, 0.997527), (7, 0.999089), (8, 0.999665)]
+    breakpointsEqualXsegments = [(4, 0.982014), (5, 0.993307), (6, 0.997527)]
 
     FirstEightSegmentsDerivatives, FirstEightSegmentsYIntercepts = calculateSlopesAndYIntercepts(breakpointsEqualYsegmentsBF16)
     print("First 8 segments derivatives (equal y segments):", [round(m, 6) for m in FirstEightSegmentsDerivatives])
     print("First 8 segments y-intercepts (equal y segments):", [round(q, 6) for q in FirstEightSegmentsYIntercepts])
 
     SecondFourSegmentsDerivatives, SecondFourSegmentsYIntercepts = calculateSlopesAndYIntercepts(breakpointsEqualXsegments)
-    print("Second 4 segments derivatives (equal x segments):", [round(m, 6) for m in SecondFourSegmentsDerivatives])
-    print("Second 4 segments y-intercepts (equal x segments):", [round(q, 6) for q in SecondFourSegmentsYIntercepts])
+    print("Second 2 segments derivatives (equal x segments):", [round(m, 6) for m in SecondFourSegmentsDerivatives])
+    print("Second 2 segments y-intercepts (equal x segments):", [round(q, 6) for q in SecondFourSegmentsYIntercepts])
 
     printBF16AndFPValues(breakpointsEqualYsegments)
     printBF16AndFPValues(breakpointsEqualXsegments)
@@ -122,8 +122,8 @@ if __name__ == "__main__":
     printBF16AndFPValues(FirstEightSegmentsDerivatives)
     print("\nBF16 and FP values for the first 8 segments: y-intercepts:")
     printBF16AndFPValues(FirstEightSegmentsYIntercepts)
-    print("\nBF16 and FP values for the second 4 segments: slopes:")
+    print("\nBF16 and FP values for the second 2 segments: slopes:")
     printBF16AndFPValues(SecondFourSegmentsDerivatives)
-    print("\nBF16 and FP values for the second 4 segments: y-intercepts:")
+    print("\nBF16 and FP values for the second 2 segments: y-intercepts:")
     printBF16AndFPValues(SecondFourSegmentsYIntercepts)
 
