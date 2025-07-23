@@ -6,15 +6,15 @@ import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilo
 
 /**
   * Chisel implementation to calculate silu(x) = x * sigmoid(x), and gelu(x) ~ x * sigmoid(1.702x)
-  * sigmoid is approximated using 10 segments each linearly interpolated as y = m*abs(x) + q, using the local slope m and y-intercept q.
-  * first 8 segments: equally spaced y-values between 0.500000 and 0.982014
+  * sigmoid is approximated using 18 segments each linearly interpolated as y = m*abs(x) + q, using the local slope m and y-intercept q.
+  * first 16 segments: equally spaced y-values between 0.500000 and 0.982014
   * second 2 segments: equally spaced x-values between 4 and 6
   *
   * For negative numbers, sigmoid(x) = 1 - sigmoid(-x) is exploited, halving the needed segments.
   * if abs(numbers) > 6, sigmoid = 0 or 1 depending on sign, so the silu and gelu just return 0 or the input itself.
   * The implementation only supports BF16 floating point representation
   */
-class siluandgeluPWLSigmoid10Segments extends Module {
+class siluandgeluPWLSigmoid18Segments extends Module {
     val io = IO(new Bundle {
         val in_a = Input(Bits(16.W)) // define as raw Bits collection, but represents BF16
         val in_select = Input(UInt(1.W)) // 0 for SiLU, 1 for GELU
@@ -78,42 +78,82 @@ class siluandgeluPWLSigmoid10Segments extends Module {
                 slopeReg := "b0_01111000_0111001".U // 0.011292
                 interceptReg := "b0_01111110_1110000".U // 0.937500
             }
-        }.otherwise { // one of eight segments 
+        }.otherwise { // one of 16 segments 
             when (in_a_fp >= "b001_0000110".U) {
-                when (in_a_fp >= "b001_1101001".U) {
-                    when (in_a_fp >= "b010_0111011".U) { // 4 > sigmoidInput >= 2.468750
-                        slopeReg := "b0_01111010_0100001".U // 0.039307
-                        interceptReg := "b0_01111110_1010011".U // 0.824219
-                    }.otherwise { // 2.468750 > sigmoidInput >= 1.828125
-                        slopeReg := "b0_01111011_1000001".U // 0.094238
-                        interceptReg := "b0_01111110_0110000".U // 0.687500
+                when (in_a_fp >= "b010_0001101".U) {
+                    when (in_a_fp >= "b010_1111110".U) { // 4 > sigmoidInput >= 2.984375
+                        slopeReg := "b0011110011110011".U 
+                        interceptReg := "b0011111101011101".U 
+                    }.otherwise {
+                        when (in_a_fp >= "b010_0111011".U) { // 2.984375 > sigmoidInput >= 2.468750
+                            slopeReg := "b0011110101101110".U 
+                            interceptReg := "b0011111101000111".U 
+                        }.otherwise { // 2.468750 > sigmoidInput >= 2.109375
+                            slopeReg := "b0011110110101100".U 
+                            interceptReg := "b0011111100110111".U
+                        }
                     }
                 }
                 .otherwise {
-                    when (in_a_fp >= "b001_0110010".U) { // 1.828125 > sigmoidInput >= 1.390625
-                        slopeReg := "b0_01111100_0001110".U // 0.138672
-                        interceptReg := "b0_01111110_0011011".U // 0.605469
-                    }.otherwise { // 1.390625 > sigmoidInput >= 1.054688
-                        slopeReg := "b0_01111100_0110100".U // 0.175781
-                        interceptReg := "b0_01111110_0001110".U // 0.554688
+                    when (in_a_fp >= "b001_1001100".U) {
+                        when (in_a_fp >= "b001_1101001".U) { // 2.109375 > sigmoidInput >= 1.828125
+                            slopeReg := "b0011110111011100".U 
+                            interceptReg := "b0011111100101010".U
+                        }.otherwise { // 1.828125 > sigmoidInput >= 1.593750
+                            slopeReg := "b0011111000000101".U 
+                            interceptReg := "b0011111100100000".U 
+                        }
+                    }.otherwise { 
+                        when (in_a_fp >= "b001_0110010".U) { // 1.593750 > sigmoidInput >= 1.390625
+                            slopeReg := "b0011111000011010".U 
+                            interceptReg := "b0011111100011000".U 
+                        }.otherwise {
+                            when (in_a_fp >= "b001_0011011".U) { // 1.390625 > sigmoidInput >= 1.210938
+                                slopeReg := "b0011111000101100".U 
+                                interceptReg := "b0011111100010001".U 
+                            }.otherwise { // 1.210938 > sigmoidInput >= 1.054688
+                                slopeReg := "b0011111000111101".U
+                                interceptReg := "b0011111100001100".U
+                            }
+                        }
                     }
                 }
             }.otherwise {
                 when (in_a_fp >= "b000_0111110".U) {
-                    when (in_a_fp >= "b000_1100000".U) { // 1.054688 > sigmoidInput >= 0.757812
-                        slopeReg := "b0_01111100_1010010".U // 0.205078
-                        interceptReg := "b0_01111110_0000111".U // 0.527344
-                    }.otherwise { // 0.757812 > sigmoidInput >= 0.492188
-                        slopeReg := "b0_01111100_1101000".U // 0.226562
-                        interceptReg := "b0_01111110_0000010".U // 0.507812
+                    when (in_a_fp >= "b000_1100000".U) {
+                        when (in_a_fp >= "b000_1110011".U) { // 1.054688 > sigmoidInput >= 0.898438
+                            slopeReg := "b0011111001001011".U 
+                            interceptReg := "b0011111100001000".U 
+                        }.otherwise { // 0.898438 > sigmoidInput >= 0.757812
+                            slopeReg := "b0011111001011001".U 
+                            interceptReg := "b0011111100000101".U
+                        }
+                    }.otherwise { 
+                        when (in_a_fp >= "b000_100111".U) { // 0.757812 > sigmoidInput >= 0.621094
+                            slopeReg := "b0011111001100100".U 
+                            interceptReg := "b0011111100000011".U 
+                        }.otherwise { // 0.621094 > sigmoidInput >= 0.492188
+                            slopeReg := "b0011111001101101".U
+                            interceptReg := "b0011111100000010".U
+                        }
                     }
                 }.otherwise {
-                    when (in_a_fp >= "b000_0011110".U) { // 0.492188 > sigmoidInput >= 0.242188
-                        slopeReg := "b0_01111100_1110111".U // 0.241211
-                        interceptReg := "b0_01111110_0000000".U // 0.500000
-                    }.otherwise { // 0.242188 > sigmoidInput >= 0.000000
-                        slopeReg := "b0_01111100_1111111".U // 0.249023
-                        interceptReg := "b0_01111110_0000000".U // 0.500000
+                    when (in_a_fp >= "b000_0011110".U) { 
+                        when (in_a_fp >= "b000_0101110".U) { // 0.492188 > sigmoidInput >= 0.365234
+                            slopeReg := "b0011111001110101".U 
+                            interceptReg := "b0011111100000001".U 
+                        }.otherwise { // 0.365234 > sigmoidInput >= 0.242188
+                            slopeReg := "b0011111001111010".U 
+                            interceptReg := "b0011111100000000".U
+                        }
+                    }.otherwise {
+                        when (in_a_fp >= "b000_0001111".U) { // 0.242188 > sigmoidInput >= 0.120605
+                            slopeReg := "b0011111001111110".U 
+                            interceptReg := "b0011111100000000".U 
+                        }.otherwise { // 0.120605 > sigmoidInput >= 0.000000
+                            slopeReg := "b0_011111010000000".U 
+                            interceptReg := "b0_011111100000000".U
+                        }
                     }
                 }
             }
@@ -130,12 +170,12 @@ class siluandgeluPWLSigmoid10Segments extends Module {
 }
 
 /**
- * Generate Verilog sources and save it in generated/siluandgeluPWLSigmoid10Segments.sv
+ * Generate Verilog sources and save it in generated/siluandgeluPWLSigmoid18Segments.sv
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  */
-object siluandgeluPWLSigmoid10SegmentsMain extends App {
+object siluandgeluPWLSigmoid18SegmentsMain extends App {
     ChiselStage.emitSystemVerilogFile(
-        new siluandgeluPWLSigmoid10Segments,
+        new siluandgeluPWLSigmoid18Segments,
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
         args = Array("--target-dir", "generated2")
     )

@@ -54,9 +54,9 @@ def printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4, s
         min = 0.5
         print("(j        index      sigmoid       sigmoid_bf16      sigmoid_FP:3int.7frac  sigmoid_bf16_float   error)")
     elif function == "sigmoid-uniform-x":
-        step = (8.0-4.0)/(sigmoidEntries)
+        step = (8.0-0.0)/(sigmoidEntries)
         max = 8.0+step
-        min = 4.0
+        min = 0.0
         print("(j        index      sigmoid       sigmoid_bf16      sigmoid_FP:3int.7frac  sigmoid_bf16_float   error)")
     else:
         raise ValueError("Unsupported function. Use 'silu', 'tanh', 'gelu', 'sigmoidInv', 'sigmoid-uniform-y' or 'sigmoid-uniform-x'.")
@@ -173,9 +173,9 @@ if __name__ == "__main__":
     # printIndexedFunctionTableExtensive(function="silu", intBits=2, fracBits=4)
     # printIndexedFunctionTableExtensive(function="sigmoidInv", sigmoidEntries=32)
 
-    # To generate the two LUT tables with 8 and 4 segments, 12 segments total to calculate the coefficients for the sigmoid:
-    printIndexedFunctionTableExtensive(function="sigmoid-uniform-y", sigmoidEntries=8)
-    printIndexedFunctionTableExtensive(function="sigmoid-uniform-x", sigmoidEntries=4)
+    # Generate the two LUT tables with 8 and 2 segments -> 10 segments total to calculate the coefficients for the sigmoid between 0 and 6:
+    # printIndexedFunctionTableExtensive(function="sigmoid-uniform-y", sigmoidEntries=16)
+    printIndexedFunctionTableExtensive(function="sigmoid-uniform-x", sigmoidEntries=32)
 
     # printIndexedSiluTableSimple()
 

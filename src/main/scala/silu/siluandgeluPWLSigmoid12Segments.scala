@@ -6,7 +6,7 @@ import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilo
 
 /**
   * Chisel implementation to calculate silu(x) = x * sigmoid(x), and gelu(x) ~ x * sigmoid(1.702x)
-  * sigmoid is approximated using 12 segments each linearly interpolated as y = m*x + q, using the local slope m and y-intercept q.
+  * sigmoid is approximated using 12 segments each linearly interpolated as y = m*abs(x) + q, using the local slope m and y-intercept q.
   * first 8 segments: equally spaced y-values between 0.500000 and 0.982014
   * second 4 segments: equally spaced x-values between 4 and 8
   *
@@ -47,10 +47,10 @@ class siluandgeluPWLSigmoid12Segments extends Module {
     // val sigmoidReg = RegInit(0.U(16.W)) // register for the sigmoid value for x > 0
     val fullRangeSigmoidReg = RegInit(0.U(16.W)) // register for the sigmoid value for all x
 
-    val fpmult1 = Module(new FPMult16ALT) // 1cc for slope * x
+    val fpmult1 = Module(new FPMult16ALT) // 1cc for slope * abs(x)
     fpmult1.io.a := sigmoidInput
     fpmult1.io.b := slopeReg
-    val fpadd1 = Module(new FPAdd16ALT) // 3cc for slope*x + intercept
+    val fpadd1 = Module(new FPAdd16ALT) // 3cc for slope*abs(x) + intercept
     fpadd1.io.a := fpmult1.io.res 
     fpadd1.io.b := interceptReg
     val sigmoidOut = fpadd1.io.res // no reg, just a wire
@@ -129,7 +129,6 @@ class siluandgeluPWLSigmoid12Segments extends Module {
                 }
             }
         }
-        
         when (sign === 0.U) { // 8 > sigmoidInput >= 0
             fullRangeSigmoidReg := sigmoidOut
         }.otherwise { // -8 < sigmoidInput <= -0
@@ -144,7 +143,6 @@ class siluandgeluPWLSigmoid12Segments extends Module {
 /**
  * Generate Verilog sources and save it in generated/siluandgeluPWLSigmoid12Segments.sv
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
- * Change log2lutsize to generate for other LUT depths.
  */
 object siluandgeluPWLSigmoid12SegmentsMain extends App {
     ChiselStage.emitSystemVerilogFile(
