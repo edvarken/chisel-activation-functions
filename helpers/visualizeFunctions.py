@@ -255,7 +255,7 @@ def visualizeGELUAndSiLU():
     x = np.linspace(xmin, xmax, 1000)
     exact_silu = x / (1 + np.exp(-x))
     plt.rcParams['text.usetex'] = True
-    ax.plot(x, exact_silu, label=r'SiLU', color=colors[0], linestyle='--', linewidth=1.5)
+    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='--', linewidth=1.5)
 
     # real GELU
     exact_gelu = x * 0.5 * (1 + erf(x / np.sqrt(2)))

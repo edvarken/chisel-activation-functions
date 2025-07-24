@@ -54,7 +54,7 @@ def createBreakpoints(min, max, step, function):
     while j < max+step:
         if function ==  "sigmoid-uniform-x":
             function_float = 1 / (1 + math.exp(-j))
-            function_float = round(function_float, (4+3))
+            function_float = round(function_float, (4+10))  # round to 14 decimal places
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
         # Take the first 2 bytes (most significant bits) for BF16, but round-to-nearest-and-to-even-if-tied 
@@ -64,7 +64,7 @@ def createBreakpoints(min, max, step, function):
         # Convert the bf16 back to its float representation
         function_bf16_int = int(function_bf16_bits, 2) << 16  # Shift back to 32-bit float position
         function_bf16_float = struct.unpack('>f', struct.pack('>I', function_bf16_int))[0]
-        breakpoints.append((round(j,6), round(function_bf16_float, 6))) # round to 6 decimal places
+        breakpoints.append((round(j,14), round(function_bf16_float, 14))) # round to 9 decimal places
         j += step
     return breakpoints
 
@@ -113,13 +113,13 @@ def printBF16AndFPValues(values):
         value_bf16_bytes = mantissaRounder(value_bytes)
         # Convert to bit string
         value_bf16_bits = ''.join(f'{byte:08b}' for byte in value_bf16_bytes)
-        # convert the bf16 bits to an integer representation with 3 integer bits and 7 fractional bits
-        value_FP3intfrac7 = f"{int(x0):03b}_{int((x0 - int(x0)) * 2**7):07b}"
+        # convert the bf16 bits to an integer representation with 3 integer bits and 9 fractional bits
+        value_FP3intfrac9 = f"{int(x0):03b}_{int((x0 - int(x0)) * 2**9):09b}"
         # Convert the bf16 back to its float representation
         function_bf16_int = int(value_bf16_bits, 2) << 16  # Shift back to 32-bit float position
         function_bf16_float = struct.unpack('>f', struct.pack('>I', function_bf16_int))[0]
         # Print the values
-        print(f"({x0:.6f}, {i + 1}, {value_bf16_bits}, {value_FP3intfrac7}, {function_bf16_float:.6f})")
+        print(f"({x0:.6f}, {i + 1}, {value_bf16_bits}, {value_FP3intfrac9}, {function_bf16_float:.6f})")
 
 def printSegmentsStuff(n_equalYsegments, breakpointsEqualYsegmentsBF16, breakpointsEqualXsegments):
     FirstEightSegmentsDerivatives, FirstEightSegmentsYIntercepts, FirstEightSegmentsmirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpointsEqualYsegmentsBF16)
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     #################################  20 segments total, first 4 then 16 segments  ######################################
     breakpoints4EqualXsegments = createBreakpoints(0, 2, 0.5, "sigmoid-uniform-x") # 5 brkpts
     breakpoints16EqualXsegments = createBreakpoints(2, 6, (6-2)/16, "sigmoid-uniform-x") # 17 brkpts
-    slopes, y_intercepts, mirrored_y_intercepts =calculateSlopesAndYIntercepts(breakpoints4EqualXsegments)
+    slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints4EqualXsegments)
     printBF16AndFPValues(breakpoints4EqualXsegments)
     print(f"\nBF16 and FP values for the first 4 segments: slopes")
     printBF16AndFPValues(slopes)

@@ -16,15 +16,15 @@ import math.sqrt
 import math.exp 
 
 class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
-    var max_test_value = 8.0f // declare the maximum test value
+    var max_test_value = 6.0f // declare the maximum test value
     var positive_only = false
-    var N = 100 // declare N
+    var N = 200 // declare N
     if (positive_only) {
-        N = 50
+        N = N/2 // if positive_only, then N is halved since we only test in [0, max_test_value]
         println(f"${N} inputs in the range: [0.0, ${max_test_value}]")
     }
     else {
-        N = 100
+        N = N 
         println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
     }
     // #########################################################################################################
@@ -90,8 +90,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU 12 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"SiLU 12 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 12 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -159,8 +159,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU 10 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"SiLU 10 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 10 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -214,7 +214,7 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 if (verbose > 0) {
-                    print(diff + ", ")
+                    print(s"$diff, ")
                     // println(f"input x-value: ${a_upper16bits_float}")
                     // println(f"output silu-using-PWLSigmoid18-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                     // println(f"expected exact SiLU value: ${expected}")
@@ -229,8 +229,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU 18 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"SiLU 18 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 18 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -284,7 +284,7 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 if (verbose > 0) {
-                    print(diff + ", ")
+                    print(s"${diff}, ")
                     // println(f"input x-value: ${a_upper16bits_float}")
                     // println(f"output silu-using-PWLSigmoid20-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                     // println(f"expected exact SiLU value: ${expected}")
@@ -299,8 +299,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU 20 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"SiLU 20 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 20 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -354,8 +354,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 if (verbose > 0) {
-                    print(diff + ", ") // capture errors, print to stdout(=terminal)
-
+                    // capture errors, print to stdout(=terminal)
+                    print(s"${diff}, ")
                     // println(f"input x-value: ${a_upper16bits_float}")
                     // println(f"output silu-using-PWLSigmoid20-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                     // println(f"expected exact SiLU value: ${expected}")
@@ -370,8 +370,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU 20 PWL Sigmoid segments with Extra Intercepts: Mean Squared Error (MSE): ${mse}")
             println(f"SiLU 20 PWL Sigmoid segments with Extra Intercepts: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 20 PWL Sigmoid segments with Extra Intercepts: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -425,8 +425,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 if (verbose > 0) {
-                    print(diff + ", ") // capture errors, print to stdout(=terminal)
-
+                    // capture errors, print to stdout(=terminal)
+                    print(s"${diff}, ")
                     // println(f"input x-value: ${a_upper16bits_float}")
                     // println(f"output silu-using-PWLSigmoid20-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                     // println(f"expected exact SiLU value: ${expected}")
@@ -441,8 +441,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Mean Squared Error (MSE): ${mse}")
             println(f"SiLU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -513,8 +513,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU 12 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"GELU 12 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU 12 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -582,8 +582,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU 10 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"GELU 10 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU 10 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -651,8 +651,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU 18 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"GELU 18 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU 18 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -720,8 +720,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU 20 PWL Sigmoid segments: Mean Squared Error (MSE): ${mse}")
             println(f"GELU 20 PWL Sigmoid segments: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU 20 PWL Sigmoid segments: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -775,7 +775,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat // GELU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 if (verbose > 0) {
-                    print(diff + ", ") // capture errors, print to stdout(=terminal)
+                    // capture errors, print to stdout(=terminal)
+                    print(s"${diff}, ")
                     // println(f"input x-value: ${a_upper16bits_float}")
                     // println(f"output gelu-using-using-PWLSigmoid20-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                     // println(f"expected exact GELU value: ${expected}")
@@ -790,8 +791,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU 20 PWL Sigmoid segments with Extra Intercepts: Mean Squared Error (MSE): ${mse}")
             println(f"GELU 20 PWL Sigmoid segments with Extra Intercepts: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU 20 PWL Sigmoid segments with Extra Intercepts: Maximum Absolute Error (Max AE): ${max_AE}")
@@ -845,7 +846,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat // GELU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 if (verbose > 0) {
-                    print(diff + ", ") // capture errors, print to stdout(=terminal)
+                    // capture errors, print to stdout(=terminal)
+                    print(s"${diff}, ")
                     // println(f"input x-value: ${a_upper16bits_float}")
                     // println(f"output gelu-using-using-PWLSigmoid20-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                     // println(f"expected exact GELU value: ${expected}")
@@ -860,8 +862,8 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Mean Squared Error (MSE): ${mse}")
             println(f"GELU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Maximum Absolute Error (Max AE): ${max_AE}")
