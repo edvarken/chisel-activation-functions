@@ -329,6 +329,9 @@ def visualizeSigmoid():
     plt.tight_layout()
     plt.show()
 
+def visualizeSigmoidAnd22Segments():
+    pass # TODO
+
 
 if __name__ == "__main__":
     # visualizeSiLUAndApprox()
@@ -337,3 +340,4 @@ if __name__ == "__main__":
 
     visualizeGELUAndSiLU()
     # visualizeSigmoid()
+    visualizeSigmoidAnd20Segments()

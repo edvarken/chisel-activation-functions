@@ -64,7 +64,8 @@ def createBreakpoints(min, max, step, function):
         # Convert the bf16 back to its float representation
         function_bf16_int = int(function_bf16_bits, 2) << 16  # Shift back to 32-bit float position
         function_bf16_float = struct.unpack('>f', struct.pack('>I', function_bf16_int))[0]
-        breakpoints.append((round(j,14), round(function_bf16_float, 14))) # round to 9 decimal places
+        # breakpoints.append((round(j,14), round(function_bf16_float, 14))) # round to 9 decimal places
+        breakpoints.append((j, function_float))
         j += step
     return breakpoints
 
@@ -186,19 +187,30 @@ if __name__ == "__main__":
     breakpoints4EqualXsegments = createBreakpoints(0, 2, 0.5, "sigmoid-uniform-x") # 5 brkpts
     breakpoints16EqualXsegments = createBreakpoints(2, 6, (6-2)/16, "sigmoid-uniform-x") # 17 brkpts
     slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints4EqualXsegments)
-    printBF16AndFPValues(breakpoints4EqualXsegments)
-    print(f"\nBF16 and FP values for the first 4 segments: slopes")
-    printBF16AndFPValues(slopes)
-    print(f"\nBF16 and FP values for the first 4 segments: y-intercepts:")
-    printBF16AndFPValues(y_intercepts)
-    print(f"\nBF16 and FP values for the first 4 segments: mirrored y-intercepts:")
-    printBF16AndFPValues(mirrored_y_intercepts)
-    print("\n=========================================================\n")
+    # printBF16AndFPValues(breakpoints4EqualXsegments)
+    # print(f"\nBF16 and FP values for the first 4 segments: slopes")
+    # printBF16AndFPValues(slopes)
+    # print(f"\nBF16 and FP values for the first 4 segments: y-intercepts:")
+    # printBF16AndFPValues(y_intercepts)
+    # print(f"\nBF16 and FP values for the first 4 segments: mirrored y-intercepts:")
+    # printBF16AndFPValues(mirrored_y_intercepts)
+    # print("\n=========================================================\n")
     slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints16EqualXsegments)
-    printBF16AndFPValues(breakpoints16EqualXsegments)
-    print("\nBF16 and FP values for the second 16 segments: slopes:")
+    # print(slopes)
+    # printBF16AndFPValues(breakpoints16EqualXsegments)
+    # print("\nBF16 and FP values for the second 16 segments: slopes:")
+    # printBF16AndFPValues(slopes)
+    # print("\nBF16 and FP values for the second 16 segments: y-intercepts:")
+    # printBF16AndFPValues(y_intercepts)
+    # print("\nBF16 and FP values for the second 16 segments: mirrored y-intercepts:")
+    # printBF16AndFPValues(mirrored_y_intercepts)
+    print("\n=========================================================\n")
+    breakpoints2EqualXsegments = createBreakpoints(6, 8, 1.0, "sigmoid-uniform-x") # 3 brkpts
+    printBF16AndFPValues(breakpoints2EqualXsegments)
+    slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints2EqualXsegments)
+    print(f"\nBF16 and FP values for the first 2 segments: slopes")
     printBF16AndFPValues(slopes)
-    print("\nBF16 and FP values for the second 16 segments: y-intercepts:")
+    print(f"\nBF16 and FP values for the first 2 segments: y-intercepts:")
     printBF16AndFPValues(y_intercepts)
-    print("\nBF16 and FP values for the second 16 segments: mirrored y-intercepts:")
+    print(f"\nBF16 and FP values for the first 2 segments: mirrored y-intercepts:")
     printBF16AndFPValues(mirrored_y_intercepts)

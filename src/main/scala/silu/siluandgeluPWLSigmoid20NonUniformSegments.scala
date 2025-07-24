@@ -61,25 +61,24 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
 
     when (a(14,0) === "b00000000_0000000".U ) { // in_a = +-0
         fullRangeSigmoidReg := 0.U
-    }.elsewhen (a_int >= "b110".U || actual_exp >= 3.S) { // sigmoidInput <= -6 or sigmoidInput >= +6
+    }.elsewhen (actual_exp >= 3.S || a_int >= "b110".U) { // sigmoidInput <= -6 or sigmoidInput >= +6
         when (sign === 1.U) { // sigmoidInput <= -6
             fullRangeSigmoidReg := 0.U // sigmoid(sigmoidInput) = 0
         }.otherwise { // in_a >= +6
             fullRangeSigmoidReg := "b0_01111111_0000000".U(16.W) // sigmoid(sigmoidInput) = 1
         }
-
-    }.otherwise { // x*sigmoid(sigmoidInput)
+    }.otherwise { // x*sigmoid(sigmoidInput) // 6.0 > sigmoidInput >= 0.0
         when (in_a_fp < "b010_0000000".U) { // sigmoidInput < 2.0: first four segments
             when (a_int >= "b001".U) { // 2.0 > sigmoidInput >= 1.0
                 when (a_frac >= "b1000000".U) { // 2.0 > sigmoidInput >= 1.5
-                    slopeReg := "b0011111000000000".U // 0.125000
+                    slopeReg := "b0011111000000001".U // 0.125977
                     when (sign === 0.U) {
                         interceptReg := "b0011111100100001".U // 0.628906
                     }.otherwise {
-                        interceptReg := "b0011111010111110".U // q' = 1 - q = 0.371094
+                        interceptReg := "b0011111010111111".U // q' = 1 - q = 0.373047
                     }
                 }.otherwise { // 1.5 > sigmoidInput >= 1.0
-                    slopeReg := "b0011111000110000".U // 0.171875
+                    slopeReg := "b0011111000110001".U // 0.172852
                     when (sign === 0.U) {
                         interceptReg := "b0011111100001111".U // 0.558594
                     }.otherwise {
@@ -88,50 +87,86 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                 }
             }.otherwise { 
                 when (a_frac >= "b1000000".U) { // 1.0 > sigmoidInput >= 0.5
-                    slopeReg := "b0011111001100000".U // 0.218750
+                    slopeReg := "b0011111001011110".U // 0.216797
                     when (sign === 0.U) {
-                        interceptReg := "b0011111100000011".U // 0.511719
+                        interceptReg := "b0011111100000100".U // 0.515625
                     }.otherwise {
-                        interceptReg := "b0011111011111010".U // q' = 1 - q = 0.488281
+                        interceptReg := "b0011111011111001".U // q' = 1 - q = 0.486328
                     }
                 }.otherwise { // 0.5 > sigmoidInput >= 0.0
-                    slopeReg := "b0011111001111000".U // 0.242188
+                    slopeReg := "b0011111001111011".U // 0.245117
                     interceptReg := "b0011111100000000".U // 0.500000 and q' = 1 - q = 0.500000
                 }
             }
-        }.otherwise { // 2.0 <= sigmoidInput < 6.0: last '16' segments 
+        }.otherwise { // 2.0 <= sigmoidInput < 6.0: middle '16' segments 
             when (a_int >= "b100".U) { // sigmoidInput >= 4
                 when (a_int >= "b101".U) { // sigmoidInput > 5
-                    when (in_a_fp >= "b101_0100000".U) { // sigmoidInput > 5.25: 3 segments with same slope and intercept
-                        slopeReg := "b0000000000000000".U // 0.0
-                        when (sign === 0.U) {
-                            interceptReg := "b0011111101111111".U // 0.996094
-                        }.otherwise {
-                            interceptReg := "b0011101110000000".U // 0.003906
+                    when (in_a_fp >= "b101_1000000".U) { // sigmoidInput > 5.5
+                        when (in_a_fp >= "b101_1100000".U) { // sigmoidInput > 5.75
+                            slopeReg := "b0011101100111000".U // 0.002808
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101111011".U // 0.980469
+                            }.otherwise {
+                                interceptReg := "b0011110010011110".U // 0.019287
+                            }
+                        }.otherwise { // 5.75 > sigmoidInput >= 5.5
+                            slopeReg := "b0011101101101011".U // 0.003586
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101111010".U // 0.976562
+                            }.otherwise {
+                                interceptReg := "b0011110011000011".U // 0.023804
+                            }
                         }
-                    }.otherwise {  // 5.25 > sigmoidInput >= 5.0
-                        slopeReg := "b0011110010000000".U // 0.015625
-                        when (sign === 0.U) {
-                            interceptReg := "b0011111101101010".U // 0.914062
-                        }.otherwise {
-                            interceptReg := "b0011110110110000".U //0.085938
+                    }.otherwise {  // 5.5 > sigmoidInput >= 5.0
+                        when (in_a_fp >= "b101_0100000".U) { // 5.5 > sigmoidInput > 5.25
+                            slopeReg := "b0011101110010111".U // 0.004608
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101111000".U // 0.968750
+                            }.otherwise {
+                                interceptReg := "b0011110011110001".U //0.029419
+                            }
+                        }.otherwise { // 5.25 > sigmoidInput >= 5.0
+                            slopeReg := "b0011101111000001".U // 0.005890
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101110111".U // 0.964844
+                            }.otherwise {
+                                interceptReg := "b0011110100010100".U // 0.036133   
+                            }
                         }
                     }
                 }
                 .otherwise { // 5.0 > sigmoidInput >= 4.0
-                    when (in_a_fp >= "b100_1100000".U) { // 5.0 > sigmoidInput >= 4.75
-                        slopeReg := "b0000000000000000".U // 0.0
-                        when (sign === 0.U) {
-                            interceptReg := "b0011111101111110".U // 992188
-                        }.otherwise {
-                            interceptReg := "b0011110000000000".U // 0.007812
+                    when (in_a_fp >= "b100_1000000".U) { // sigmoidInput >= 4.5
+                        when (in_a_fp >= "b100_1100000".U) { // 5.0 > sigmoidInput >= 4.75
+                            slopeReg := "b0011101111110111".U // 0.007538 // index 12
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101110101".U // 0.957031
+                            }.otherwise {
+                                interceptReg := "b0011110100110110".U // 0.044434
+                            }
+                        }.otherwise { // 4.75 > sigmoidInput >= 4.5
+                            slopeReg := "b0011110000011110".U // 0.009644
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101110010".U // 0.945312
+                            }.otherwise {
+                                interceptReg := "b0011110101011111".U // 0.054443
+                            }
                         }
-                    }.otherwise { // 4.75 > sigmoidInput >= 4.0: 3 segments with same slope and intercept
-                        slopeReg := "b0011110010000000".U // 0.015625
-                        when (sign === 0.U) {
-                            interceptReg := "b0011111101101011".U // 0.917969
-                        }.otherwise {
-                            interceptReg := "b0011110110101000".U // 0.082031
+                    }.otherwise {  // 4.5 > sigmoidInput >= 4.0
+                        when (in_a_fp >= "b100_0100000".U) { // >= 4.25
+                            slopeReg := "b0011110001001010".U // 0.012329
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101101111".U // 0.933594
+                            }.otherwise {
+                                interceptReg := "b0011110110001000".U //0.066406
+                            }
+                        }.otherwise { // index 9
+                            slopeReg := "b0011110010000001".U // 0.015747
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111101101011".U // 0.917969
+                            }.otherwise {
+                                interceptReg := "b0011110110100101".U // 0.080566   
+                            }
                         }
                     }
                 }
@@ -139,52 +174,52 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                 when (a_int >= "b011".U) { // sigmoidInput > 3.0
                     when (in_a_fp >= "b011_1000000".U) { // sigmoidInput > 3.5
                         when (in_a_fp >= "b011_1100000".U) { // 4.0 > sigmoidInput >= 3.75
-                            slopeReg := "b0011110010000000".U // 0.015625
+                            slopeReg := "b0011110010100100".U // 0.020020
                             when (sign === 0.U) {
-                                interceptReg := "b0011111101101011".U // 0.917969
+                                interceptReg := "b0011111101100111".U // 0.902344
                             }.otherwise {
-                                interceptReg := "b0011110110101000".U // 0.082031
+                                interceptReg := "b0011110111001000".U // 0.097656
                             }
                         }.otherwise { // 3.75 > sigmoidInput >= 3.5 // index 7
-                            slopeReg := "b0011110100000000".U // 0.031250
+                            slopeReg := "b0011110011010000".U // 0.025391
                             when (sign === 0.U) {
-                                interceptReg := "b0011111101011100".U // 0.859375
+                                interceptReg := "b0011111101100010".U // 0.882812
                             }.otherwise {
-                                interceptReg := "b0011111000010000".U // 0.140625
+                                interceptReg := "b0011110111110010".U // 0.118164
                             }
                         }
                     }.otherwise { 
                         when (in_a_fp >= "b011_0100000".U) { // 3.5 > sigmoidInput >= 3.25
-                            slopeReg := "b0011110100000000".U // 0.031250
+                            slopeReg := "b0011110100000011".U // 0.031982
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101011100".U // 0.859375
                             }.otherwise {
-                                interceptReg := "b0011111000010000".U // 0.140625
+                                interceptReg := "b0011111000010001".U // 0.141602
                             }
                         }.otherwise { // 3.25 > sigmoidInput >= 3.0 // index 5
-                            slopeReg := "b0011110100000000".U // 0.031250
+                            slopeReg := "b0011110100100101".U // 0.040283
                             when (sign === 0.U) {
-                                interceptReg := "b0011111101011100".U // 0.859375
+                                interceptReg := "b0011111101010101".U // 0.832031
                             }.otherwise {
-                                interceptReg := "b0011111000010000".U // 0.140625
+                                interceptReg := "b0011111000101101".U // 0.168945
                             }
                         }
                     }
                 }.otherwise { // 3.0 > sigmoidInput >= 2.0
                     when (a_frac >= "b1000000".U) { // sigmoidInput >= 2.5
                         when (a_frac >= "b1100000".U) { // 3.0 > sigmoidInput >= 2.75
-                            slopeReg := "b0011110101000000".U // 0.046875
+                            slopeReg := "b0011110101001111".U // 0.050537
                             when (sign === 0.U) {
-                                interceptReg := "b0011111101010000".U // 0.812500
+                                interceptReg := "b0011111101001101".U // 0.800781
                             }.otherwise {
-                                interceptReg := "b0011111001000000".U // 0.187500
+                                interceptReg := "b0011111001001100".U // 0.199219
                             }
                         }.otherwise { // 2.75 > sigmoidInput >= 2.5
-                            slopeReg := "b0011110110000000".U // 0.062500
+                            slopeReg := "b0011110110000001".U // 0.062988
                             when (sign === 0.U) {
-                                interceptReg := "b0011111101000101".U // 0.769531
+                                interceptReg := "b0011111101000100".U // 0.765625
                             }.otherwise {
-                                interceptReg := "b0011111001101100".U // 0.230469
+                                interceptReg := "b0011111001101111".U // 0.233398
                             }
                         }
                     }.otherwise {
@@ -193,14 +228,14 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                             when (sign === 0.U) {
                                 interceptReg := "b0011111100111011".U // 0.730469
                             }.otherwise {
-                                interceptReg := "b0011111010001010".U // 0.269531
+                                interceptReg := "b0011111010001011".U // 0.271484
                             }
                         }.otherwise { // 2.25 > sigmoidInput >= 2.0
-                            slopeReg := "b0011110111100000".U // 0.109375
-                             when (sign === 0.U) {
-                                interceptReg := "b0011111100101001".U // 0.660156
+                            slopeReg := "b0011110111000011".U // 0.095215
+                            when (sign === 0.U) {
+                                interceptReg := "b0011111100110001".U // 0.691406
                             }.otherwise {
-                                interceptReg := "b0011111010101110".U // 0.339844
+                                interceptReg := "b0011111010011111".U // 0.310547
                             }
                         }
                     }

@@ -16,7 +16,7 @@ import math.sqrt
 import math.exp 
 
 class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
-    var max_test_value = 6.0f // declare the maximum test value
+    var max_test_value = 8.0f // declare the maximum test value
     var positive_only = false
     var N = 200 // declare N
     if (positive_only) {
@@ -814,7 +814,7 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
             c.io.in_a.poke("b0_01111111_1000000".U(16.W)) // 1.5
             c.io.in_select.poke("b1".U(1.W))
             c.clock.step(8)
-            c.io.out_a.expect("b0_01111111_0110011".U(16.W)) // 1.39978919809671290 ~ 1.3828125
+            c.io.out_a.expect("b0_01111111_0110010".U(16.W)) // 1.39978919809671290 ~ 1.3828125
 
             c.io.in_a.poke("b1_00000000_0000000".U(16.W))
             c.io.in_select.poke("b1".U(1.W))
@@ -824,7 +824,7 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
             c.io.in_a.poke("b1_01111111_1000000".U(16.W)) // -1.5
             c.io.in_select.poke("b1".U(1.W))
             c.clock.step(8) 
-            c.io.out_a.expect("b1011110111011000".U(16.W)) // -0.100210801903287099 ~ -0.10546875
+            c.io.out_a.expect("b1011110111011110".U(16.W)) // -0.100210801903287099 ~ -0.10546875
 
             var mse = 0.0f
             var mse_MAE = 0.0f
