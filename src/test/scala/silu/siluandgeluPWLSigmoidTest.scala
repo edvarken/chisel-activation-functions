@@ -377,6 +377,7 @@ class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
             println(f"SiLU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU 20 PWL Sigmoid non-uniform segments with Extra Intercepts: Maximum Absolute Error (Max AE): ${max_AE}")
             println("==============================")
+            println("==============================")
         }
     }
 

@@ -13,7 +13,7 @@ import math.exp
 class siluUsingLUTTest extends AnyFreeSpec with Matchers {
     var verbose = 0 
     var max_test_value = 8.0f
-    var N = 300
+    var N = 200
     println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
     "siluUsingLUTTest should correctly apply an approximate SiLU value using a Lookup Table with 128 entries for [-4, 4] on BF16 input numbers" in {
         simulate(new siluUsingLUT(intBits = 2, fracBits = 4)) { c =>
@@ -39,7 +39,6 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output silu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -47,6 +46,7 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -54,11 +54,12 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"SiLU LUT (128 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"SiLU LUT (128 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"SiLU LUT (128 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"SiLU LUT (128 entries in [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"SiLU LUT (128 entries in [-4, 4]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"SiLU LUT (128 entries in [-4, 4]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -84,7 +85,6 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1) // 1cc latency due to output Register in siluUsingLUT.scala, this is a lot less than silu.scala which has 5 clock cycles latency!!
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -101,11 +101,12 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"SiLU LUT (256 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"SiLU LUT (256 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"SiLU LUT (256 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"SiLU LUT (256 entries in [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"SiLU LUT (256 entries in [-4, 4]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"SiLU LUT (256 entries in [-4, 4]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -131,7 +132,6 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1) // 1cc latency due to output Register in siluUsingLUT.scala, this is a lot less than silu.scala which has 5 clock cycles latency!!
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -148,11 +148,12 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"SiLU LUT (512 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"SiLU LUT (512 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"SiLU LUT (512 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"SiLU LUT (512 entries in [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"SiLU LUT (512 entries in [-4, 4]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"SiLU LUT (512 entries in [-4, 4]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -178,7 +179,6 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1) // 1cc latency due to output Register in siluUsingLUT.scala, this is a lot less than silu.scala which has 5 clock cycles latency!!
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -195,11 +195,12 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"SiLU LUT (256 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"SiLU LUT (256 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"SiLU LUT (256 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"SiLU LUT (256 entries in [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"SiLU LUT (256 entries in [-8, 8]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"SiLU LUT (256 entries in [-8, 8]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -225,7 +226,6 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1) // 1cc latency due to output Register in siluUsingLUT.scala, this is a lot less than silu.scala which has 5 clock cycles latency!!
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -242,11 +242,12 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"SiLU LUT (512 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"SiLU LUT (512 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"SiLU LUT (512 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"SiLU LUT (512 entries in [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"SiLU LUT (512 entries in [-8, 8]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"SiLU LUT (512 entries in [-8, 8]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -272,7 +273,6 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1) // 1cc latency due to output Register in siluUsingLUT.scala, this is a lot less than silu.scala which has 5 clock cycles latency!!
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
                 assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
@@ -289,11 +289,12 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"SiLU LUT (1024 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"SiLU LUT (1024 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"SiLU LUT (1024 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"SiLU LUT (1024 entries in [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"SiLU LUT (1024 entries in [-8, 8]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"SiLU LUT (1024 entries in [-8, 8]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 }

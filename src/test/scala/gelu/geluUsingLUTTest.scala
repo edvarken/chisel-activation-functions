@@ -15,7 +15,7 @@ import math.sqrt
 class geluUsingLUTTest extends AnyFreeSpec with Matchers {
     var verbose = 0 
     var max_test_value = 8.0f
-    var N = 100
+    var N = 200
     println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
     "geluUsingLUTTest should correctly apply an approximate GELU value using a Lookup Table with 128 entries for [-4, 4] on BF16 input numbers" in {
         simulate(new geluUsingLUT(intBits = 2, fracBits = 4)) { c =>
@@ -42,7 +42,6 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
                 // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a}")
                     println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -50,6 +49,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -57,11 +57,12 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"GELU LUT (128 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"GELU LUT (128 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"GELU LUT (128 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"GELU LUT (128 entries in [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"GELU LUT (128 entries in [-4, 4]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"GELU LUT (128 entries in [-4, 4]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -90,7 +91,6 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
                 // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a}")
                     println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -98,6 +98,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -105,11 +106,12 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"GELU LUT (256 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"GELU LUT (256 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"GELU LUT (256 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"GELU LUT (256 entries in [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"GELU LUT (256 entries in [-4, 4]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"GELU LUT (256 entries in [-4, 4]): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -136,9 +138,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a}")
                     println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -146,18 +146,19 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
-                mse_MAE += diff.abs
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
                 }
+                mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"GELU LUT (512 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"GELU LUT (512 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"GELU LUT (512 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"GELU LUT (512 entries in [-4, 4]): Mean Squared Error (MSE): ${mse}")
+            println(f"GELU LUT (512 entries in [-4, 4]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"GELU LUT (512 entries in [-4, 4]): Maximum Absolute Error (Max AE): ${max_AE}")
         }
     }
 
@@ -184,9 +185,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a}")
                     println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -194,6 +193,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -201,11 +201,11 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"GELU LUT (256 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"GELU LUT (256 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"GELU LUT (256 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"GELU LUT (256 entries in [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"GELU LUT (256 entries in [-8, 8]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"GELU LUT (256 entries in [-8, 8]): Maximum Absolute Error (Max AE): ${max_AE}")
         }
     }
 
@@ -232,9 +232,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a}")
                     println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -242,6 +240,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -249,11 +248,11 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"GELU LUT (512 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"GELU LUT (512 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"GELU LUT (512 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"GELU LUT (512 entries in [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"GELU LUT (512 entries in [-8, 8]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"GELU LUT (512 entries in [-8, 8]): Maximum Absolute Error (Max AE): ${max_AE}")
         }
     }
 
@@ -280,9 +279,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 // GELU 'nearly exact' formula:
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a}")
                     println(f"output gelu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -290,6 +287,7 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -297,11 +295,11 @@ class geluUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
-            println(f"GELU LUT (1024 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
-            println(f"GELU LUT (1024 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
-            println(f"GELU LUT (1024 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
+            println(f"GELU LUT (1024 entries in [-8, 8]): Mean Squared Error (MSE): ${mse}")
+            println(f"GELU LUT (1024 entries in [-8, 8]): Mean Absolute Error (MAE): ${mse_MAE}")
+            println(f"GELU LUT (1024 entries in [-8, 8]): Maximum Absolute Error (Max AE): ${max_AE}")
         }
     }
 }

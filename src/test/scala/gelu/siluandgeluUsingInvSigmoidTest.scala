@@ -18,7 +18,7 @@ import math.exp
 class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
     var verbose = 0
     var max_test_value = 8.0f
-    var N = 100
+    var N = 200
     println(f"${N} inputs in the range: [-${max_test_value}, ${max_test_value}]")
     // #########################################################################################################
     // ##############################        SiLU         ######################################################
@@ -58,9 +58,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 c.clock.step(7) // must assume 6cc since inputs can be negative meaning an Adder is needed with 3cc latency
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output silu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -68,6 +66,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -75,11 +74,12 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU invSigmoid LUT (32 entries): Mean Squared Error (MSE): ${mse}")
             println(f"SiLU invSigmoid LUT (32 entries): Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU invSigmoid LUT (32 entries): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -120,7 +120,6 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output silu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -128,6 +127,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -135,11 +135,12 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU invSigmoid LUT (64 entries): Mean Squared Error (MSE): ${mse}")
             println(f"SiLU invSigmoid LUT (64 entries): Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU invSigmoid LUT (64 entries): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -178,9 +179,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 c.clock.step(7) // must assume 6cc since inputs can be negative meaning an Adder is needed with 3cc latency
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output silu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -188,6 +187,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -195,11 +195,13 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"SiLU invSigmoid LUT (128 entries): Mean Squared Error (MSE): ${mse}")
             println(f"SiLU invSigmoid LUT (128 entries): Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"SiLU invSigmoid LUT (128 entries): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
+            println("==============================")
         }
     }
 
@@ -241,9 +243,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 c.clock.step(7) // must assume 6cc since inputs can be negative meaning an Adder is needed with 3cc latency
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat // GELU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output gelu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -251,6 +251,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -258,11 +259,12 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU invSigmoid LUT (32 entries): Mean Squared Error (MSE): ${mse}")
             println(f"GELU invSigmoid LUT (32 entries): Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU invSigmoid LUT (32 entries): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -301,9 +303,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 c.clock.step(7) // must assume 6cc since inputs can be negative meaning an Adder is needed with 3cc latency
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat // GELU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output gelu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -311,6 +311,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -318,11 +319,12 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU invSigmoid LUT (64 entries): Mean Squared Error (MSE): ${mse}")
             println(f"GELU invSigmoid LUT (64 entries): Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU invSigmoid LUT (64 entries): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 
@@ -361,9 +363,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 c.clock.step(7) // must assume 6cc since inputs can be negative meaning an Adder is needed with 3cc latency
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float * 0.5 * (1 + math.tanh((math.sqrt(2 / math.Pi) * (a_upper16bits_float + 0.044715 * math.pow(a_upper16bits_float,3)))))).toFloat // GELU formula
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
                     println(f"input x-value: ${a_upper16bits_float}")
                     println(f"output gelu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
@@ -371,6 +371,7 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                     println(f"Difference: ${diff}")
                     println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs
@@ -378,11 +379,12 @@ class siluandgeluUsingInvSigmoidTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"GELU invSigmoid LUT (128 entries): Mean Squared Error (MSE): ${mse}")
             println(f"GELU invSigmoid LUT (128 entries): Mean Absolute Error (MAE): ${mse_MAE}")
             println(f"GELU invSigmoid LUT (128 entries): Maximum Absolute Error (Max AE): ${max_AE}")
+            println("==============================")
         }
     }
 }
