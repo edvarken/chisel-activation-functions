@@ -23,7 +23,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
     val a = io.in_a // a must be a BigInt
     val sign = a(15).asUInt
 
-    val bf16tofp = Module(new BF16toFP(3, 7)) // BF16 to Fixed Point converter, 3 bits for integer part and 7 bits for fractional part
+    val bf16tofp = Module(new BF16toFP(3, 2)) // BF16 to Fixed Point converter, 3 bits for integer part and 2 bits for fractional part
 
     val fpmult0 = Module(new FPMult16ALT) // 1cc for x*1 or x*1.703125
     fpmult0.io.a := a
@@ -68,9 +68,9 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
             fullRangeSigmoidReg := "b0_01111111_0000000".U(16.W) // sigmoid(sigmoidInput) = 1
         }
     }.otherwise { // x*sigmoid(sigmoidInput) with 6.0 > sigmoidInput >= 0.0
-        when (in_a_fp < "b010_0000000".U) { // sigmoidInput < 2.0: first four segments
+        when (in_a_fp < "b010_00".U) { // sigmoidInput < 2.0: first four segments
             when (a_int >= "b001".U) { // 2.0 > sigmoidInput >= 1.0
-                when (a_frac >= "b1000000".U) { // 2.0 > sigmoidInput >= 1.5
+                when (a_frac >= "b10".U) { // 2.0 > sigmoidInput >= 1.5
                     slopeReg := "b0011111000000001".U // 0.125977
                     when (sign === 0.U) {
                         interceptReg := "b0011111100100001".U // 0.628906
@@ -86,7 +86,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                     }
                 }
             }.otherwise { 
-                when (a_frac >= "b1000000".U) { // 1.0 > sigmoidInput >= 0.5
+                when (a_frac >= "b10".U) { // 1.0 > sigmoidInput >= 0.5
                     slopeReg := "b0011111001011110".U // 0.216797
                     when (sign === 0.U) {
                         interceptReg := "b0011111100000100".U // 0.515625
@@ -101,8 +101,8 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
         }.otherwise { // 2.0 <= sigmoidInput < 6.0: middle '16' segments 
             when (a_int >= "b100".U) { // sigmoidInput >= 4
                 when (a_int >= "b101".U) { // sigmoidInput > 5
-                    when (in_a_fp >= "b101_1000000".U) { // sigmoidInput > 5.5
-                        when (in_a_fp >= "b101_1100000".U) { // sigmoidInput > 5.75
+                    when (in_a_fp >= "b101_10".U) { // sigmoidInput > 5.5
+                        when (in_a_fp >= "b101_11".U) { // sigmoidInput > 5.75
                             slopeReg := "b0011101100111000".U // 0.002808
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101111011".U // 0.980469
@@ -118,7 +118,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                             }
                         }
                     }.otherwise {  // 5.5 > sigmoidInput >= 5.0
-                        when (in_a_fp >= "b101_0100000".U) { // 5.5 > sigmoidInput > 5.25
+                        when (in_a_fp >= "b101_01".U) { // 5.5 > sigmoidInput > 5.25
                             slopeReg := "b0011101110010111".U // 0.004608
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101111000".U // 0.968750
@@ -136,8 +136,8 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                     }
                 }
                 .otherwise { // 5.0 > sigmoidInput >= 4.0
-                    when (in_a_fp >= "b100_1000000".U) { // sigmoidInput >= 4.5
-                        when (in_a_fp >= "b100_1100000".U) { // 5.0 > sigmoidInput >= 4.75
+                    when (in_a_fp >= "b100_10".U) { // sigmoidInput >= 4.5
+                        when (in_a_fp >= "b100_11".U) { // 5.0 > sigmoidInput >= 4.75
                             slopeReg := "b0011101111110111".U // 0.007538 // index 12
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101110101".U // 0.957031
@@ -153,7 +153,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                             }
                         }
                     }.otherwise {  // 4.5 > sigmoidInput >= 4.0
-                        when (in_a_fp >= "b100_0100000".U) { // >= 4.25
+                        when (in_a_fp >= "b100_01".U) { // >= 4.25
                             slopeReg := "b0011110001001010".U // 0.012329
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101101111".U // 0.933594
@@ -172,8 +172,8 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                 }
             }.otherwise { // 4.0 > sigmoidInput >= 2.0
                 when (a_int >= "b011".U) { // sigmoidInput > 3.0
-                    when (in_a_fp >= "b011_1000000".U) { // sigmoidInput > 3.5
-                        when (in_a_fp >= "b011_1100000".U) { // 4.0 > sigmoidInput >= 3.75
+                    when (in_a_fp >= "b011_10".U) { // sigmoidInput > 3.5
+                        when (in_a_fp >= "b011_11".U) { // 4.0 > sigmoidInput >= 3.75
                             slopeReg := "b0011110010100100".U // 0.020020
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101100111".U // 0.902344
@@ -189,7 +189,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                             }
                         }
                     }.otherwise { 
-                        when (in_a_fp >= "b011_0100000".U) { // 3.5 > sigmoidInput >= 3.25
+                        when (in_a_fp >= "b011_01".U) { // 3.5 > sigmoidInput >= 3.25
                             slopeReg := "b0011110100000011".U // 0.031982
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101011100".U // 0.859375
@@ -206,8 +206,8 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                         }
                     }
                 }.otherwise { // 3.0 > sigmoidInput >= 2.0
-                    when (a_frac >= "b1000000".U) { // sigmoidInput >= 2.5
-                        when (a_frac >= "b1100000".U) { // 3.0 > sigmoidInput >= 2.75
+                    when (a_frac >= "b10".U) { // sigmoidInput >= 2.5
+                        when (a_frac >= "b11".U) { // 3.0 > sigmoidInput >= 2.75
                             slopeReg := "b0011110101001111".U // 0.050537
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101001101".U // 0.800781
@@ -223,7 +223,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                             }
                         }
                     }.otherwise {
-                        when (a_frac >= "b0100000".U) { // 2.5 > sigmoidInput >= 2.25
+                        when (a_frac >= "b01".U) { // 2.5 > sigmoidInput >= 2.25
                             slopeReg := "b0011110110100000".U // 0.078125
                             when (sign === 0.U) {
                                 interceptReg := "b0011111100111011".U // 0.730469
