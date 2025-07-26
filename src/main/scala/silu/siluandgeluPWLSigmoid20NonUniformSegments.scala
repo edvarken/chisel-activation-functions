@@ -160,7 +160,7 @@ class siluandgeluPWLSigmoid20NonUniformSegments extends Module {
                             }.otherwise {
                                 interceptReg := "b0011110110001000".U //0.066406
                             }
-                        }.otherwise { // index 9
+                        }.otherwise { // index 9: 4.25 > sigmoidInput >= 4.0
                             slopeReg := "b0011110010000001".U // 0.015747
                             when (sign === 0.U) {
                                 interceptReg := "b0011111101101011".U // 0.917969
