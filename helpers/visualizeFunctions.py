@@ -110,6 +110,9 @@ def getSigmoidTableValues(entries=32) -> tuple[List[float], List[float]]:
 def relu(x):
     return np.maximum(0, x)
 
+def relu6(x):
+    return np.maximum(0, np.minimum(6, x))
+
 
 def visualizeSiLUAndApprox():
     silu_plot = plt.figure(figsize=(10, 8)) 
@@ -138,8 +141,6 @@ def visualizeSiLUAndApprox():
     plt.plot(x, exact_silu, label=r'exact SiLU', color=colors[0], linestyle='-', linewidth=1)
 
     # SiLU approximation 1
-    def relu6(x):
-        return np.maximum(0, np.minimum(6, x))
     approx_silu1 = (x * relu6(x+3)) / 6
     plt.rcParams['text.usetex'] = True
     plt.plot(x, approx_silu1, label=r'$SiLU_1(x) = \frac{x}{6} \cdot \mathrm{ReLU6}(x+3)$', color=colors[1], linestyle='--')
@@ -234,6 +235,8 @@ def visualizeDyTAndApprox():
     plt.tight_layout()  # Adjust layout to prevent stretching
     plt.show()
 
+#########################################################################################################
+#########################################################################################################
 
 def visualizeGELUAndSiLU():
     plot = plt.figure(figsize=(12, 10)) 
@@ -249,7 +252,7 @@ def visualizeGELUAndSiLU():
     plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
     plt.yticks(np.arange(ymin, ymax+1, 1), fontsize=14)
 
-    colors = ['k', 'grey']
+    colors = ['blue', 'red']
 
     # real SiLU
     x = np.linspace(xmin, xmax, 1000)
@@ -329,15 +332,192 @@ def visualizeSigmoid():
     plt.tight_layout()
     plt.show()
 
-def visualizeSigmoidAnd22Segments():
-    pass # TODO
+
+def visualizeSiLUAndZeroOrderApprox():
+    plot = plt.figure(figsize=(12, 10)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    xmin = -2
+    xmax = 4
+    ymin = -1
+    ymax = 4
+
+    ax = plt.gca()
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax+1, 1), fontsize=14)
+
+    colors = ['k', 'blue'] # black for official, blue for 256 segments of zero-order approx. silu
+
+    # real SiLU
+    x = np.linspace(xmin, xmax, 1000)
+    exact_silu = x / (1 + np.exp(-x))
+    plt.rcParams['text.usetex'] = True
+    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=1.5)
+
+    # 256 segments of zero-order approximation of SiLU in -8,8 which means 128 segments in -4,4
+    # which means 64 segments in 0,4
+    segment_edges = np.linspace(xmin, xmax, int((xmax-xmin)/16 * 256))  # 96 segments => 97 edges
+    segment_centers = (segment_edges[:-1] + segment_edges[1:]) / 2  # 96 centers
+    silu_centers = segment_centers / (1 + np.exp(-segment_centers))
+
+    # For plotting, draw a horizontal line for each segment
+    for i in range(len(segment_centers)): # 96 segments in -2,4
+        ax.hlines(silu_centers[i], segment_edges[i], segment_edges[i+1], colors=colors[1], linestyles='-', linewidth=1.5, label='SiLU zero-order approx. using 256 segments in [-8,8]' if i == 0 else "")
+
+    # Only add the label once for the legend (on the first segment)
+
+
+    # Move left and bottom spines to zero position
+    ax.spines['left'].set_position(('data', 0))
+    ax.spines['bottom'].set_position(('data', 0))
+
+    # Hide the top and right spines
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+
+    # Optional: set ticks position
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+
+    # Make axes arrows (ensure arrow tips are visible within figure bounds)
+    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    # Use slightly less than the axis limits for arrow tips
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+
+    # Place axis labels at arrow tips, just inside the bounds
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.25), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=16, fontweight='bold', clip_on=False)
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.tight_layout()
+    plt.show()
+
+
+def visualizehSiLU():
+    plot = plt.figure(figsize=(12, 10)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    xmin = -4
+    xmax = 4
+    ymin = -4
+    ymax = 4
+
+    ax = plt.gca()
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax+1, 1), fontsize=14)
+
+    colors = ['k', 'blue']
+
+    # real SiLU
+    x = np.linspace(xmin, xmax, 1000)
+    exact_silu = x / (1 + np.exp(-x))
+    plt.rcParams['text.usetex'] = True
+    ax.plot(x, exact_silu, label='SiLU(x)', color=colors[0], linestyle='-', linewidth=1.5)
+
+    # h-SiLU approximation: piecewise linear function
+    np.maximum(0, np.minimum(6, x))
+    approx_silu1 = (x * relu6(x+3)) / 6
+    ax.plot(x, approx_silu1, label=r'h-SiLU(x)', color=colors[1], linestyle='--')
+
+    # Move spines to center
+    ax.spines['left'].set_position('center')
+    ax.spines['bottom'].set_position('center')
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+
+    # Make axes arrows (ensure arrow tips are visible within figure bounds)
+    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    # Use slightly less than the axis limits for arrow tips
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+
+    # Place axis labels at arrow tips, just inside the bounds
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.25), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=16, fontweight='bold', clip_on=False)
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.tight_layout()
+    plt.show()
+
+
+def visualizeSigmoidAndFirstOrderApprox():
+    plot = plt.figure(figsize=(12, 10)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    xmin = 0
+    xmax = 6.02
+    ymin = 0
+    ymax = 1.01
+
+    ax = plt.gca()
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xticks(np.arange(xmin, xmax, 0.25), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax, 0.5), fontsize=14)
+
+    colors = ['k', 'blue'] # black for official, blue for 20 segments of first-order approx. sigmoid
+
+    # # real Sigmoid
+    x = np.linspace(xmin, xmax, 1000)
+    exact_sigmoid = 1/ (1 + np.exp(-x))
+    plt.rcParams['text.usetex'] = True
+    ax.plot(x, exact_sigmoid, label='Sigmoid', color=colors[0], linestyle='-', linewidth=1)
+
+    # 20 segments of first-order approximation of SIGMOID in [0,6]: 4 of which in [0,2]; the other 16 in [2,6]
+    segment_edges1 = np.linspace(0, 2, 5) 
+    segment_edges2 = np.linspace(2, 6, 17)
+
+    # For plotting, draw a linear line for each segment
+    added_label_already = False
+    for segmentgroup in [segment_edges1, segment_edges2]:
+        for i in range(len(segmentgroup)-1):
+            x0 = segmentgroup[i]
+            x1 = segmentgroup[i+1]
+            y0 = 1 / (1 + np.exp(-x0))
+            y1 = 1 / (1 + np.exp(-x1))
+            if not added_label_already:
+                ax.plot([x0, x1], [y0, y1], color=colors[1], linestyle='-', marker='o', markersize=3, linewidth=0.5, label='Sigmoid first-order approx. using 20 segments in [0,6]' if i == 0 else "")
+            else:
+                ax.plot([x0, x1], [y0, y1], color=colors[1], linestyle='-', marker='o', markersize=3, linewidth=0.5, label= "")
+        added_label_already = True
+            
+    # Move left and bottom spines to zero position
+    ax.spines['left'].set_position(('data', 0))
+    ax.spines['bottom'].set_position(('data', 0))
+
+    # Hide the top and right spines
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+
+    # Optional: set ticks position
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+
+    # Make axes arrows (ensure arrow tips are visible within figure bounds)
+    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    # Use slightly less than the axis limits for arrow tips
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+
+    # Place axis labels at arrow tips, just inside the bounds
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.10, -0.05), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.15, ymax-0.05), fontsize=16, fontweight='bold', clip_on=False)
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
     # visualizeSiLUAndApprox()
     # visualizeGELUAndApprox()
     # visualizeDyTAndApprox()
+    ###########################
 
-    visualizeGELUAndSiLU()
+    # visualizeGELUAndSiLU()
+    # visualizeSiLUAndZeroOrderApprox()
     # visualizeSigmoid()
-    visualizeSigmoidAnd20Segments()
+    # visualizehSiLU()
+    visualizeSigmoidAndFirstOrderApprox()

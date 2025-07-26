@@ -116,8 +116,8 @@ class rangeGN(val C: Int) extends Module {
   rangeSub.io.b := minVal ^ (1.U << 15) // flip sign of min to subtract
   // val range = ShiftRegister(rangeSub.io.res, 3) // because rangeSub has 3cc latency
   // val range = ShiftRegister(rangeSub.io.res, 0) 
-  // val range = RegNext(rangeSub.io.res) 
-  val range = rangeSub.io.res
+  val range = RegNext(rangeSub.io.res) // adds extra 1cc latency for the register: check if it fixes C.P.D
+  // val range = rangeSub.io.res
 
   // io.debugRangeOut := range // for debugging purposes, output the range
 
@@ -144,7 +144,7 @@ class rangeGN(val C: Int) extends Module {
 
   // === Multiply by recip_alpha ===
   val finalMuls = Seq.fill(N)(Module(new FPMult16ALT)) // 1cc latency per multiplier
-  val result = Wire(Vec(N, UInt(16.W)))
+  val result = Reg(Vec(N, UInt(16.W))) // adds extra 1cc latency for the output register: check if it fixes C.P.D
 
   for (i <- 0 until N) {
     finalMuls(i).io.a := divResults(i)
@@ -161,11 +161,11 @@ class rangeGN(val C: Int) extends Module {
  * Uncomment to generate the SystemVerilog file when using 'sbt run'
  * Change C to 640 or 1280 to generate for those configurations
  */
-// object rangeGNMain extends App {
-//     ChiselStage.emitSystemVerilogFile(
-//         new rangeGN(C = 320), 
-//         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "--lowering-options=" + List(
-//         "disallowLocalVariables", "disallowPackedArrays", "locationInfoStyle=wrapInAtSquareBracket").reduce(_ + "," + _)),
-//         args = Array("--target-dir", "generated")
-//     )
-// }
+object rangeGNMain extends App {
+    ChiselStage.emitSystemVerilogFile(
+        new rangeGN(C = 320), 
+        firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "--lowering-options=" + List(
+        "disallowLocalVariables", "disallowPackedArrays", "locationInfoStyle=wrapInAtSquareBracket").reduce(_ + "," + _)),
+        args = Array("--target-dir", "generated2")
+    )
+}
