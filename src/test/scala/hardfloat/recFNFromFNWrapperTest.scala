@@ -7,6 +7,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class recFNFromFNWrapperTest extends AnyFreeSpec with Matchers {
+    var verbose = false
     "rawFloatFromFNWrapper should convert Floating Point number correctly to raw Format for expWidth=5 and sigWidth=10" in { 
         var verbose = false
         val expWidth = 5 // this means bias = 2^(expWidth-1) - 1 = 15
@@ -18,8 +19,10 @@ class recFNFromFNWrapperTest extends AnyFreeSpec with Matchers {
             c.io.in.poke(input)
             c.clock.step()
             val output = c.io.out.peek()
-            println(s"Input FP16 format: ${toBinary(input.litValue.toInt, 16)}") // FP16 format
-            println(s"Output recoded format: ${toBinary(output.litValue.toInt, 17)}") // recoded format
+            if (verbose) {
+                println(s"Input FP16 format: ${toBinary(input.litValue.toInt, 16)}") // FP16 format
+                println(s"Output recoded format: ${toBinary(output.litValue.toInt, 17)}") // recoded format
+            }
         }
     }
 }

@@ -11,6 +11,7 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
 import math.exp
 
 class siluUsingInvSigmoid32Test extends AnyFreeSpec with Matchers {
+    var verbose = 0
     "siluUsingInvSigmoid32Test should correctly apply an approximate SiLU value for a BF16 input, using 32 non-uniformly spaced inverse Sigmoid values in [-8, 8]" in {
         simulate(new siluUsingInvSigmoid32) { c =>
             var tolerance = 0.125f // approximation+quantization errors together
@@ -36,15 +37,15 @@ class siluUsingInvSigmoid32Test extends AnyFreeSpec with Matchers {
                 c.io.in_a.poke(a_upper16bits)
                 c.clock.step(6) // must assume 6cc since inputs can be negative meaning so Adder is needed with 3cc latency
                 val expected = (a / (1 + math.exp(-a))).toFloat // SiLU formula
-                println(f"input x-value: ${a}")
-                println(f"output silu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
-                println(f"expected exact silu value: ${expected}")
-
-                // subtract c.io.out_a from expected to get the difference
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                println(f"Difference: ${diff}")
+                if (verbose > 0) {
+                    println(f"input x-value: ${a}")
+                    println(f"output silu-using-invSigmoid-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                    println(f"expected exact silu value: ${expected}")
+                    println(f"Difference: ${diff}")
+                    println("###########")
+                }   
                 assert(diff.abs < tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
-                println("###########")
             }
         }
     }

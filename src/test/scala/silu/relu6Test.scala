@@ -10,6 +10,7 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
                    floatAdd, doubleAdd}
 
 class relu6Test extends AnyFreeSpec with Matchers {
+    var verbose = 0
     "relu6Test should correctly apply relu6 on BF16 numbers" in {
         simulate(new relu6) { c =>
             def toBinary(i: Int, digits: Int = 16) =
@@ -24,17 +25,23 @@ class relu6Test extends AnyFreeSpec with Matchers {
                 val a_upper16bits = ((floatToBigInt(a).toInt >> 16) & 0xFFFF).U(16.W)
                 c.io.in_a.poke(a_upper16bits)
                 if (a < 0) {
-                    println(f"Negative float, a_upper16bits: ${toBinary(a_upper16bits.litValue.toInt, 16)}")
+                    if (verbose > 0) {
+                        println(f"Negative float, a_upper16bits: ${toBinary(a_upper16bits.litValue.toInt, 16)}")
+                    }
                 }
                 else {
-                    println(f"Positive float, a_upper16bits: ${toBinary(a_upper16bits.litValue.toInt, 16)}")
+                    if (verbose > 0) {
+                        println(f"Positive float, a_upper16bits: ${toBinary(a_upper16bits.litValue.toInt, 16)}")
+                    }
                 }
                 c.clock.step(1)
                 
                 if (a < 0) {
                     val expected = 0.0f
                     val expected_upper16bits = (floatToBigInt(expected).toInt >> 16) & 0xFFFF
-                    println(f"expected: ${expected}, expected_upper16bits: ${toBinary(expected_upper16bits, 16)}")
+                    if (verbose > 0) {
+                        println(f"expected: ${expected}, expected_upper16bits: ${toBinary(expected_upper16bits, 16)}")
+                    }
                     c.io.out_a.expect(expected_upper16bits.U(16.W))
                     // subtract expected from c.io.out_a to get the difference
                     // val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
@@ -43,17 +50,23 @@ class relu6Test extends AnyFreeSpec with Matchers {
                 } else if (a >= 6.0f) {
                     val expected = 6.0f
                     val expected_upper16bits = (floatToBigInt(expected).toInt >> 16) & 0xFFFF
-                    println(f"expected: ${expected}, expected_upper16bits: ${toBinary(expected_upper16bits, 16)}")
+                    if (verbose > 0) {
+                        println(f"expected: ${expected}, expected_upper16bits: ${toBinary(expected_upper16bits, 16)}")
+                    }
                     c.io.out_a.expect(expected_upper16bits.U(16.W))
                 } else {
                     val expected = a
                     val expected_upper16bits = (floatToBigInt(expected).toInt >> 16) & 0xFFFF
-                    println(f"expected: ${expected}, expected_upper16bits: ${toBinary(expected_upper16bits, 16)}")
+                    if (verbose > 0) {
+                        println(f"expected: ${expected}, expected_upper16bits: ${toBinary(expected_upper16bits, 16)}")
+                    }
                     c.io.out_a.expect(expected_upper16bits.U(16.W))
                 }
-                println(f"out_a_bits: ${toBinary(c.io.out_a.peek().litValue.toInt, 16)}")
-                println(f"out_a: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
-                println("################################################")
+                if (verbose > 0) {
+                    println(f"out_a_bits: ${toBinary(c.io.out_a.peek().litValue.toInt, 16)}")
+                    println(f"out_a: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                    println("################################################")
+                }
             }
         }
     }

@@ -8,7 +8,7 @@ import org.scalatest.matchers.must.Matchers
 
 class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
     "DivSqrtRawFN_small should compute division correctly for expWidth=5 and sigWidth=11(includes implicit m.s. bit)" in { // Compare with ETH Zuerich's CV-FPU's division Verilog implementation
-        var verbose = true
+        var verbose = false
         val expWidth = 5 // this means bias = 2^(expWidth-1) - 1 = 15
         val sigWidth = 11
         simulate(new DivSqrtRecFN_small(expWidth, sigWidth, options = 0)) { c =>
@@ -16,7 +16,8 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 String.format("%" + digits + "s", i.toBinaryString).replace(' ', '0')
             // ###################################################################################################
             // ########################################      test 1        #######################################
-            println("FP16: Starting test 1...")
+            if (verbose)
+                println("FP16: Starting test 1...")
             while (!c.io.inReady.peek().litToBoolean) { // wait until inReady is true to start the operation
                 c.clock.step(1)
             }
@@ -30,7 +31,8 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
             c.clock.step(1)
             c.io.inValid.poke(false.B)
             var waited = 0
-            println(s"Start waiting for rawOutValid_div to become true...")
+            if (verbose)
+                println(s"Start waiting for rawOutValid_div to become true...")
             while (!c.io.outValid_div.peek().litToBoolean && waited < 40) { // Wait until rawOutValid_div (or _sqrt) becomes true to read the result.
                 c.clock.step(1)
                 waited += 1
@@ -42,9 +44,9 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 println(s"rawOutValid_sqrt: ${c.io.outValid_sqrt.peek().litToBoolean}")
             }
             assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // The assertion passes if this value is true.
-            println(s"waited cycles: $waited") // should be 13?
             var result = c.io.out.peek().litValue // Get the result as a BigInt
             if (verbose) {
+                println(s"waited cycles: $waited") // should be 13?
                 println(f"Result: ${toBinary(result.toInt, 16)}") // recoded format!, since mantissa has an extra m.s. bit for special cases, ignore it for now
                 println(f"sign: ${toBinary(((result >> 15) & 0x1).toInt, 1)}") // 0
                 println(f"exponent: ${toBinary(((result >> 10) & 0x1F).toInt, 5)}") // 2^(16-15) = 2^1 = 2
@@ -52,10 +54,10 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
             }
             assert(result == "b0_10000_0011001101".U(16.W).litValue, "Division result does not match expected value") 
             // Result is 2^1 * 1.2001953125 = 2.400390625 :)
-            println("############")
             // ###################################################################################################
             // ########################################      test 2        #######################################
-            println("FP16: Starting test 2...")
+            if (verbose)
+                println("FP16: Starting test 2...")
             while (!c.io.inReady.peek().litToBoolean) { // wait until inReady is true to start another operation
                 c.clock.step(1)
             }
@@ -69,7 +71,8 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
             c.clock.step(1)
             c.io.inValid.poke(false.B)
             waited = 0
-            println(s"Start waiting for rawOutValid_div to become true...")
+            if (verbose)
+                println(s"Start waiting for rawOutValid_div to become true...")
             while (!c.io.outValid_div.peek().litToBoolean && waited < 40) {
                 c.clock.step(1)
                 waited += 1
@@ -81,23 +84,21 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 println(s"rawOutValid_sqrt: ${c.io.outValid_sqrt.peek().litToBoolean}")
             }
             assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // if assertion fails it prints its message.
-            println(s"waited cycles: $waited") // should be 13?
             result = c.io.out.peek().litValue 
-            
             if (verbose) {
+                println(s"waited cycles: $waited") // should be 13?
                 println(f"Result: ${toBinary(result.toInt, 16)}") 
                 println(f"sign: ${toBinary(((result >> 15) & 0x1).toInt, 1)}")
                 println(f"exponent: ${toBinary(((result >> 10) & 0x1F).toInt, 5)}")
                 println(f"significand: ${toBinary((result & 0x3FF).toInt, 10)}")
             }
             assert(result == "b0_10110_0010110011".U(16.W).litValue, "Division result does not match expected value") 
-            println("############")
             // Result is 2^7 * 1.175 = 150.4
         }
     }
 
     "DivSqrtRawFN_small should compute division correctly for expWidth=8 and sigWidth=8(includes implicit m.s. bit)" in { // Compare with ETH Zuerich's CV-FPU's division Verilog implementation
-        var verbose = true
+        var verbose = false
         val expWidth = 8 // this means bias = 2^(expWidth-1) - 1 = 127
         val sigWidth = 8 // this is actually 7 bits of significand + 1 implicit bit, so total 8 bits
         simulate(new DivSqrtRecFN_small(expWidth, sigWidth, options = 0)) { c =>
@@ -105,7 +106,8 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 String.format("%" + digits + "s", i.toBinaryString).replace(' ', '0')
             // ###################################################################################################
             // ########################################      test 1        #######################################
-            println("BF16: Starting test 1...")
+            if (verbose)
+                println("BF16: Starting test 1...")
             while (!c.io.inReady.peek().litToBoolean) { // wait until inReady is true to start the operation
                 c.clock.step(1)
             }
@@ -119,7 +121,8 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
             c.clock.step(1)
             c.io.inValid.poke(false.B)
             var waited = 0
-            println(s"Start waiting for rawOutValid_div to become true...")
+            if (verbose)
+                println(s"Start waiting for rawOutValid_div to become true...")
             while (!c.io.outValid_div.peek().litToBoolean && waited < 40) { // Wait until rawOutValid_div (or _sqrt) becomes true to read the result.
                 c.clock.step(1)
                 waited += 1
@@ -131,9 +134,9 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 println(s"rawOutValid_sqrt: ${c.io.outValid_sqrt.peek().litToBoolean}")
             }
             assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // The assertion passes if this value is true.
-            println(s"waited cycles: $waited") // should be 13?
             var result = c.io.out.peek().litValue
             if (verbose) {
+                println(s"waited cycles: $waited") // should be 13?
                 println(f"Result: ${toBinary(result.toInt, 16)}")
                 println(f"sign: ${toBinary(((result >> 15) & 0x1).toInt, 1)}")
                 println(f"exponent: ${toBinary(((result >> 7) & 0xFF).toInt, 8)}")
@@ -141,14 +144,13 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
             }
             assert(result == "b0_01100111_0011110".U(16.W).litValue, "Division result does not match expected value") 
             // Result is 7.34996245e-8: 0_01100111_0011101, but rounds to nearest even so 0_01100111_0011110
-            println("############")
             // ###################################################################################################
             // ########################################      BF16: iterative test        #######################################
 
             // TODO: there is still a BUG when dividing a negative number, the exponent becomes all 1s :(
             // no matter if 2 negative numbers or only 1 is involved, and no matter if they are same absolute value or not, exponent becomes 11111111 :(
-
-            println("BF16: Starting iterative test...")
+            if (verbose)
+                println("BF16: Starting iterative test...")
             for ((a, b, golden_result) <- Seq(
                 ("b0_10000001_0000000".U(16.W), "b0_10000001_0000000".U(16.W), "b0_01111111_0000000".U(16.W).litValue), // 4.0 / 4.0 = 1.0
                 ("b0_10000010_0000000".U(16.W), "b0_01111111_1000000".U(16.W), "b0_10000001_0101011".U(16.W).litValue), // 8.0 / 1.5 = 5.33333333333
@@ -177,20 +179,22 @@ class DivSqrtRecFN_smallTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1)
                 c.io.inValid.poke(false.B)
                 waited = 0
-                println(s"Start waiting for rawOutValid_div to become true...")
+                if (verbose)
+                    println(s"Start waiting for rawOutValid_div to become true...")
                 while (!c.io.outValid_div.peek().litToBoolean && waited < 40) {
                     c.clock.step(1)
                     waited += 1
                 }
                 assert(c.io.outValid_div.peek().litToBoolean, "Division result did not become valid") // if assertion fails it prints its message.
-                println(s"waited cycles: $waited") // should be 13?
+                
                 result = c.io.out.peek().litValue 
                 if (verbose) {
+                    println(s"waited cycles: $waited") // should be 13?
                     println(f"Result: ${toBinary(result.toInt, 16)}")
-                println(f"sign: ${toBinary(((result >> 15) & 0x1).toInt, 1)}")
-                println(f"exponent: ${toBinary(((result >> 7) & 0xFF).toInt, 8)}")
-                println(f"significand: ${toBinary((result & 0x7F).toInt, 7)}")
-                println("############")
+                    println(f"sign: ${toBinary(((result >> 15) & 0x1).toInt, 1)}")
+                    println(f"exponent: ${toBinary(((result >> 7) & 0xFF).toInt, 8)}")
+                    println(f"significand: ${toBinary((result & 0x7F).toInt, 7)}")
+                    println("############")
                 }
                 assert(result == golden_result, "Division result does not match expected value") 
             }

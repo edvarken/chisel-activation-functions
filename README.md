@@ -6,12 +6,13 @@ This repository contains hardware descriptions for activation and normalization 
 - LayerNorm
 
 In hardware however, these functions need to be approximated.
-The SiLU is approximated in three different ways: using an (inverted) lookup-table (LUT) in the first two version, or an approximation function in the third version. The GELU function is approximated with an (inverted) LUT.
-The LayerNorm is approximated using a Dynamic Tanh function: `DyT(x) = tanh(α*x)`, implemented as a LUT
+SiLU and GELU are approximated in three four ways: using a zero-order approximation using a (inverted) lookup-table (LUT) in the first two versions, an approximation function in the third version, and a first-order LUT in the fourth version.
+The LayerNorm behavior is approximated using a Dynamic Tanh function: `DyT(x) = tanh(α*x)`, implemented as a zero-order approx.
 For GroupNorm, the range GroupNorm approximation function is used: `rangeGN(x_i) = (x_i - mean)/(alpha*range)`.
 All inputs and outputs are in BrainFloat16(BF16) format.
 
-The Chisel3 framework is used to describe, test and generate all hardware.
+The Chisel framework is used to describe, test and generate all hardware, see the build.sbt file for the scala and chisel versions used.
+This project uses the newer ChiselSim (EphemeralSimulator) and no longer relies on the old ChiselTest.
 
 <img src="img/GraphOfTwoNLFunctions.png" alt="Visualization of the two activation functions" width="700"/>
 
@@ -47,14 +48,21 @@ This implementation uses 5 comparators to find the index of the stored input clo
 | InvSigmoidb(y) | 0.5 < y < 1.0             | 64          |
 | InvSigmoidc(y) | 0.5 < y < 1.0             | 128         |
 
+<img src="img/invSigmoidLUT.png" alt="SiLU2" width="700"/>
+
+*Figure 2: Diagram of the sigmoid for SiLU version 2*
+
 ### SiLU Version 3
-Version 3 is described in `src/main/scala/silu/silu.scala` and approximates the SiLU(x) function as `SiLU3(x) = x * ReLU6(x+3) / 6`.
+Version 3 is described in `src/main/scala/silu/hsilugelu.scala` and uses h-SiLU to approximate the SiLU(x) function: `SiLU3(x) = x * ReLU6(x+3) / 6`.
 
 <img src="img/silu3_diagramZoomed180.png" alt="SiLU3" width="300"/>
 
-*Figure 2: Diagram of SiLU version 3*
+*Figure 3: Diagram of SiLU version 3*
 
 This approximation uses a BF16 Adder and two Multipliers. The Adder is pipelined and has 3 cycles latency, the two Multipliers each have 1 cycle latency, totaling 5 cycles latency for the SiLU approximation. The module can be pipelined however, to hide this latency.
+
+### SiLU Version 4
+Version 4 first uses a first-order approx. using 20 segments for the sigmoid function, to then multiply with the input to obtain SiLU. Described in `siluandgeluPWLSigmoid20NonUniformSegments.scala`
 
 ### Comparing the SiLU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
@@ -72,9 +80,6 @@ The mean squared error(MSE) is calculated using 100 uniformly spaced sample poin
 | SiLU2b(x) | 7.97e-4        | 746   | 1722.56          | 0.575143     | 1788                     |
 | SiLU2c(x) | 4.50e-4        | 886   | 1956.64          | 0.599856     | 1875                     |
 | SiLU3(x)  | 4.86e-3        | 602   | 1758.40          | 0.620901     | 2196                     |
-
-### Fitting the SiLU hardware module into the Gemmini accelerator platform
-This SiLU unit must fit into the Gemmini accelerator platform. This means the SiLU approximation unit must be parallelized just like the systolic array in Gemmini. This means that for a systolic array of size 16 by 16, we place 16 SiLU hardware units in parallel, to be able to apply 16 activation functions on 16 inputs in parallel. This ensures only single-cycle latencies are perceived when using the SiLU hardware units. Working with a 200MHz 16by16 systolic array configuration of Gemmini, 16 SiLU units are placed in parallel at the input of the scratchpad SRAM. This way the inputs can be activated with the SiLU function, before going into the systolic array. This puts a factor 16x on the area and power usage.
 
 ## GELU
 The analytic function to approximate is `GELU(x) = x*0.5*[1+erf(x/sqrt(2))]`.
@@ -106,6 +111,12 @@ This implementation uses 5 comparators to find the index of the stored input clo
 | InvSigmoidb(y) | 0.5 < y < 1.0             | 64          |
 | InvSigmoidc(y) | 0.5 < y < 1.0             | 128         |
 
+### GELU Version 3
+This version is h-GELU, the hardware of h-SiLU is reused, just a multiplication with factor 1.702 is added to approximate GELU.
+
+### GELU Version 4
+Version 4 first again uses a first-order approx. using 20 segments for the sigmoid function, reusing the hardware of SiLU version 4, to then multiply with the input to obtain GELU. Just a multiplication with factor 1.702 is added to approximate GELU. Described in `siluandgeluPWLSigmoid20NonUniformSegments.scala`
+
 ### Comparing the GELU versions
 For all versions a clock period of 5ns=5000ps is used, corresponding to a 200MHz frequency. Synthesized in TSMC 65nm, the wiring net area is neglected.
 The mean squared error(MSE) is calculated using 100 random sample points in the range -8 to 8. It shows how well the approximation fits the exact GELU function, where a lower MSE is better.
@@ -123,9 +134,6 @@ The mean squared error(MSE) is calculated using 100 random sample points in the 
 | GELU2c(x) | 2.76e-4    | 886   | 1956.64     | 0.599856   | 1875                     |
 
 The area for GELU2a/b/c and SiLU3a/b/c is shared since they use the same inverted Sigmoid LUT.
-
-### Fitting the GELU hardware module into the Gemmini accelerator platform
-To integrate the GELU unit into the Gemmini accelerator, it must be parallelized to match the architecture of the systolic array. For a 16x16 systolic array, this requires 16 GELU hardware units operating in parallel, enabling simultaneous activation of 16 input values. This parallelism ensures that the application of the activation function incurs only a single-cycle latency. In a default Gemmini configuration running at 200MHz, the 16 GELU units are placed at the output of the systolic array, before outputs go into the accumulator SRAM. This allows data to be activated by the GELU function directly after the MatMul that precedes GELU. Consequently, the total area and power consumption of the GELU block scales by a factor of 16x to accommodate this parallel deployment.
 
 ## LayerNorm 
 The exact LayerNorm is defined as `LayerNorm(x) = (x_i - mean)/(sqrt(variance))`. The mean and variance here need to be calculated along all channels for each (x,y) coordinate. Since this requires three passes over all channels to normalize all the elements/channels along a (x,y) coordinate, it is very time-consuming operation. As a simpler solution, we will approximate the normalization of each element with a dynamic hyperbolic tangent function instead.
@@ -170,21 +178,20 @@ The dynamic hyperbolic tangent function replaces the LayerNorm normalization. In
 ## range GroupNorm
 The exact GroupNorm is defined as `GroupNorm(x_i) = (x_i - mean)/(sqrt(variance))`. The mean and variance here are calculated along the channels per group only, making it more feasible than LayerNorm. However we will approximate the variance to simplify the computation.
 
+<img src="img/GroupNormZoomed180.png" alt="GroupNorm" width="400"/>
 
-<img src="img/GroupNorm.png" alt="GroupNorm" width="400"/>
-
-*Figure 3: Simple example of GroupNorm for 12 channels and 4 groups*
+*Figure 4: Simple example of GroupNorm for 12 channels and 4 groups*
 
 ### Approximative function for GroupNorm: rangeGN
 The approximative function is described in `src/main/scala/GroupNorm/rangeGN.scala` and uses a simplified calculation to approximate the GroupNorm normalization function. `rangeGN(x_i) = (x_i - mean)/(alpha*range)`
 with `alpha = 1/sqrt(2*ln(C/G))`, `mean = (1/(C/G)) *sum(x_k)` and `range = max() - min()`
 
-The latency of `rangeGN.scala` depends on the number of elements per group. The GroupNorm in the UNET of Stable Diffusion 1.5 uses 32 groups(G) and the number of channels(C) can be 320, 640 or 1280. This means there are respectively 10, 20 or 40 elements per group. The amount of elements per group impacts the adder tree's depth for the mean calculation. The total latency ranges from 29 clock cycles to 31 to 39 respectively.
-This implementation of the range GroupNorm approximation cannot work in a pipelined manner.
+The latency of `rangeGN.scala` depends on the number of elements per group. The GroupNorm in the UNET of Stable Diffusion 1.5 uses 32 groups (G) and the number of channels (C) can be 320, 640 or 1280. This means there are respectively 10, 20 or 40 elements per group. The amount of elements per group impacts the adder tree's depth for the mean calculation. The total latency ranges from 29 clock cycles to 31 to 39 respectively.
+
 ### Diagram of range GroupNorm
 <img src="img/rangeGN180Zoomed.png" alt="range GroupNorm" width="400"/>
 
-*Figure 4: Diagram of range GroupNorm*
+*Figure 5: Diagram of range GroupNorm*
 
 This approximation's critical path uses an adder tree, a multiplier with 1/m, a subtractor, a divider and another final multiplier, totaling a latency of of 30 clock cycles. The module can be pipelined however, to hide the latency.
 
@@ -199,10 +206,11 @@ TODO: The mean squared error(MSE) of range GroupNorm versus the classic GroupNor
 | rangeGN1280C(x) | 2&3        | 40 | 68824 | 152923.96    | 69.2825    | 5519                     |
 
 
-## Chisel3 tests
-Use `sbt test` to run all chisel3 tests. Running only the test for silu.scala can be done with `sbt 'testOnly silu.siluTest'`
+## Chisel tests
+Use `sbt test` to run all chisel tests. Running only the test for silu.scala for example can be done with `sbt 'testOnly silu.siluTest'`
 Running only the test for siluUsingLUT.scala can be done with `sbt 'testOnly silu.siluUsingLUTTest'`
 Running only the test for DyTUsingLUT.scala can be done with `sbt 'testOnly DyT.DyTUsingLUTTest'`
+Use `sbt "testOnly silu.siluandgeluPWLSigmoidTest"` to run the test for the first-order approx of SiLU and GELU
 Use `sbt "testOnly hardfloat.DivSqrtRecFN_smallTest"` to run the test for the 16bit brainfloat division.
 Use `sbt "testOnly GroupNorm.rangeGNTest"` to run the test for the range GroupNorm.
 

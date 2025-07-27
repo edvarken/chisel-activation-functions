@@ -10,6 +10,7 @@ import FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExpMantW
                    floatAdd, doubleAdd}
 
 class FPMult16Test extends AnyFreeSpec with Matchers {
+    var verbose = 0
     "FPMult16ALT should correctly multiply BF16 numbers" in {
         simulate(new FPMult16ALT) { c =>
 
@@ -54,8 +55,10 @@ class FPMult16Test extends AnyFreeSpec with Matchers {
                 // c.io.res is often 1 or 2 bits off in the mantissa of the bf16 representation
                 // Largest possible error when truncating FP32 to BF16 is ~ 1E36, however error creeps in up to 3rd lsbit of the mantissa!
                 val actual_value = java.lang.Float.intBitsToFloat((BigInt(c.io.res.peek().litValue.toInt) << 16).toInt)
-                println(f"actual_value: ${actual_value}")
-                println(f"expected: ${expected}")
+                if (verbose > 0) {
+                    println(f"actual_value: ${actual_value}")
+                    println(f"expected: ${expected}")
+                }
                 assert(math.abs(actual_value - expected) < max_diff, s"Expected ${toBinary(floatToBigIntBF16(lastExpected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
             }
             c.clock.step(1)
@@ -72,10 +75,13 @@ class FPMult16Test extends AnyFreeSpec with Matchers {
                 // c.io.res is 1 or 2 bits off mostly
                 // Largest possible error when truncating FP32 to BF16 is ~ 1E36= 2^127*2^-8! Instead check for exponent being right.
                 val actual_value = java.lang.Float.intBitsToFloat((BigInt(c.io.res.peek().litValue.toInt) << 16).toInt)
-                println(f"actual_value: ${actual_value}")
-                println(f"expected: ${expected}")
+                if (verbose > 0) {
+                    println(f"actual_value: ${actual_value}")
+                    println(f"expected: ${expected}")
+                    println(f"expected: ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)}, actual: ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
+                }
                 assert(math.abs(actual_value - expected) < max_diff, s"Expected ${toBinary(floatToBigIntBF16(lastExpected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
-                println(f"expected: ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)}, actual: ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
+                
             }
             for (_ <- 0 until 20) {
                 val a = scala.util.Random.nextFloat() * 0.1f - 0.05f
@@ -90,10 +96,13 @@ class FPMult16Test extends AnyFreeSpec with Matchers {
                 // c.io.res is 1 or 2 bits off mostly
                 // Largest possible error when truncating FP32 to BF16 is ~ 1E36= 2^127*2^-8! Instead check for exponent being right.
                 val actual_value = java.lang.Float.intBitsToFloat((BigInt(c.io.res.peek().litValue.toInt) << 16).toInt)
-                println(f"actual_value: ${actual_value}")
-                println(f"expected: ${expected}")
+                if (verbose > 0) {
+                    println(f"actual_value: ${actual_value}")
+                    println(f"expected: ${expected}")
+                    println(f"expected: ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)}, actual: ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
+                }
                 assert(math.abs(actual_value - expected) < max_diff, s"Expected ${toBinary(floatToBigIntBF16(lastExpected).U(16.W).litValue.toInt, 16)} but got ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
-                println(f"expected: ${toBinary(floatToBigIntBF16(expected).U(16.W).litValue.toInt, 16)}, actual: ${toBinary(c.io.res.peek().litValue.toInt, 16)}")
+                
             }
         }
     }
@@ -101,6 +110,7 @@ class FPMult16Test extends AnyFreeSpec with Matchers {
 
 
 class FPMult32Test extends AnyFreeSpec with Matchers {
+    var verbose = 0
     "FPMult32 should correctly multiply floating-point numbers" in {
         simulate(new FPMult32) { c =>
             var lastExpected = 0.0f
@@ -117,8 +127,9 @@ class FPMult32Test extends AnyFreeSpec with Matchers {
                 c.io.a.poke(floatToBigInt(a).U)
                 c.io.b.poke(floatToBigInt(b).U)
                 c.clock.step(1)
-
-                println(s"Expecting $lastExpected or ${floatToBigInt(lastExpected)}")
+                if (verbose > 0) {
+                    println(s"Expecting $lastExpected or ${floatToBigInt(lastExpected)}")
+                }
                 lastExpected = expected
                 c.io.res.expect(floatToBigInt(lastExpected).U)
             }
@@ -129,6 +140,7 @@ class FPMult32Test extends AnyFreeSpec with Matchers {
 }
 
 class FPMult64Test extends AnyFreeSpec with Matchers {
+    var verbose = 0
     "FPMult64 should correctly multiply floating-point numbers" in {
         simulate(new FPMult64) { c =>
             var lastExpected = 0.0

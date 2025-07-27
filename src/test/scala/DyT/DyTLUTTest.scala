@@ -11,6 +11,7 @@ import silu.FloatUtils.{floatToBigInt, floatToBigIntBF16, doubleToBigInt, getExp
 import math.tanh
 
 class DyTLUTTest extends AnyFreeSpec with Matchers {
+    var verbose = 0
     "DyTLUTTest should give correct LUT value for a given 7bit index(intBits=2, fracBits=4)" in {
         simulate(new DyTLUT(intBits = 2, fracBits = 4)) { c =>
             var tolerance = 0.004f // DyT LUT approximation error never gets bigger than 0.004f, 
@@ -29,10 +30,7 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
 
             for (i <- 0 until 128) { // 0000000 to 1111111
                 val index = i.U(7.W)
-                // print the binary string of 7 bits
-                println(f"index: ${index.litValue.toInt.toBinaryString}")
                 c.io.indexIn.poke(index) // padded with zeroes at the left if less than 7 bits
-
                 val sign = index(6).litValue.toInt // sign bit
                 val intPart = index(5,4).litValue.toInt.toFloat // integer part
                 val fracPart = fracBinaryToFloat(index(3,0).litValue, digits = 4) // fractional part
@@ -43,8 +41,12 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1) // should be 0cc latency since the LUT is a combinatorial circuit.
                 
                 val lutValue = java.lang.Float.intBitsToFloat((BigInt(c.io.valueOut.peek().litValue.toInt) << 16).toInt)
-                println(f"lutValue: ${lutValue}")
-                println(f"expected: ${DyTValue}")
+                if (verbose > 0) {
+                    // print the binary string of 7 bits
+                    println(f"index: ${index.litValue.toInt.toBinaryString}")
+                    println(f"lutValue: ${lutValue}")
+                    println(f"expected: ${DyTValue}")
+                }
                 assert(math.abs(lutValue - DyTValue) < tolerance, s"Expected ${DyTValue} but got ${lutValue}, for signedsamplevalue: ${signedsamplevalue}, index: ${index.litValue.toInt}")
             }
         }
@@ -65,8 +67,6 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
 
             for (i <- 0 until 256) { // 0000000 to 1111111
                 val index = i.U(8.W)
-                // print the binary string of 7 bits
-                println(f"index: ${index.litValue.toInt.toBinaryString}")
                 c.io.indexIn.poke(index) // padded with zeroes at the left if less than 8 bits
 
                 val sign = index(7).litValue.toInt // sign bit
@@ -79,8 +79,12 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1)
                 
                 val lutValue = java.lang.Float.intBitsToFloat((BigInt(c.io.valueOut.peek().litValue.toInt) << 16).toInt)
-                println(f"lutValue: ${lutValue}")
-                println(f"expected: ${DyTValue}")
+                if (verbose > 0) {
+                    // print the binary string of 7 bits
+                    println(f"index: ${index.litValue.toInt.toBinaryString}")
+                    println(f"lutValue: ${lutValue}")
+                    println(f"expected: ${DyTValue}")
+                }
                 assert(math.abs(lutValue - DyTValue) < tolerance, s"Expected ${DyTValue} but got ${lutValue}, for signedsamplevalue: ${signedsamplevalue}, index: ${index.litValue.toInt}")
             }
         }
@@ -101,8 +105,6 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
 
             for (i <- 0 until 256) { // 0000000 to 1111111
                 val index = i.U(8.W)
-                // print the binary string of 7 bits
-                println(f"index: ${index.litValue.toInt.toBinaryString}")
                 c.io.indexIn.poke(index) // padded with zeroes at the left if less than 8 bits
 
                 val sign = index(7).litValue.toInt // sign bit
@@ -115,8 +117,12 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1)
                 
                 val lutValue = java.lang.Float.intBitsToFloat((BigInt(c.io.valueOut.peek().litValue.toInt) << 16).toInt)
-                println(f"lutValue: ${lutValue}")
-                println(f"expected: ${DyTValue}")
+                if (verbose > 0) {
+                    // print the binary string of 7 bits
+                    println(f"index: ${index.litValue.toInt.toBinaryString}")
+                    println(f"lutValue: ${lutValue}")
+                    println(f"expected: ${DyTValue}")
+                }
                 assert(math.abs(lutValue - DyTValue) < tolerance, s"Expected ${DyTValue} but got ${lutValue}, for signedsamplevalue: ${signedsamplevalue}, index: ${index.litValue.toInt}")
             }
         }
@@ -137,8 +143,6 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
 
             for (i <- 0 until 512) { // 0000000 to 1111111
                 val index = i.U(9.W)
-                // print the binary string of 7 bits
-                println(f"index: ${index.litValue.toInt.toBinaryString}")
                 c.io.indexIn.poke(index) // padded with zeroes at the left if less than 8 bits
 
                 val sign = index(8).litValue.toInt // sign bit
@@ -151,11 +155,14 @@ class DyTLUTTest extends AnyFreeSpec with Matchers {
                 c.clock.step(1)
                 
                 val lutValue = java.lang.Float.intBitsToFloat((BigInt(c.io.valueOut.peek().litValue.toInt) << 16).toInt)
-                println(f"lutValue: ${lutValue}")
-                println(f"expected: ${DyTValue}")
+                if (verbose > 0) {
+                    // print the binary string of 7 bits
+                    println(f"index: ${index.litValue.toInt.toBinaryString}")
+                    println(f"lutValue: ${lutValue}")
+                    println(f"expected: ${DyTValue}")
+                }
                 assert(math.abs(lutValue - DyTValue) < tolerance, s"Expected ${DyTValue} but got ${lutValue}, for signedsamplevalue: ${signedsamplevalue}, index: ${index.litValue.toInt}")
             }
         }
     }
-
 }

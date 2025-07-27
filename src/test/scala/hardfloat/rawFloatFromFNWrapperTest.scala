@@ -7,6 +7,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 
 class rawFloatFromFNWrapperTest extends AnyFreeSpec with Matchers {
+    var verbose = false
     "rawFloatFromFNWrapper should convert Floating Point number correctly to raw Format for expWidth=5 and sigWidth=10" in { 
         var verbose = false
         val expWidth = 5 // this means bias = 2^(expWidth-1) - 1 = 15
@@ -20,13 +21,15 @@ class rawFloatFromFNWrapperTest extends AnyFreeSpec with Matchers {
             val raw_sign = c.io.sign.peek()
             val raw_sExp = c.io.sExp.peek()
             val raw_sig = c.io.sig.peek()
-            println(s"Input: ${input.litValue}")
-            println(s"Output raw_sign: ${toBinary(raw_sign.litValue.toInt, 1)}")
-            println(s"Output raw_sExp: ${toBinary(raw_sExp.litValue.toInt, expWidth)}")
-            println(s"Output raw_sig: ${toBinary(raw_sig.litValue.toInt, sigWidth-1)}")
-            // println(s"sign: ${raw.sign.litValue}")
-            // println(s"sExp: ${raw.sExp.litValue}")
-            // println(s"sig: ${raw.sig.litValue}")
+            if (verbose) {
+                println(s"Input: ${input.litValue}")
+                println(s"Output raw_sign: ${toBinary(raw_sign.litValue.toInt, 1)}")
+                println(s"Output raw_sExp: ${toBinary(raw_sExp.litValue.toInt, expWidth)}")
+                println(s"Output raw_sig: ${toBinary(raw_sig.litValue.toInt, sigWidth-1)}")
+                // println(s"sign: ${raw.sign.litValue}")
+                // println(s"sExp: ${raw.sExp.litValue}")
+                // println(s"sig: ${raw.sig.litValue}")
+            }
         }
     }
 }
