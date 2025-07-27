@@ -13,13 +13,14 @@ import hardfloat.DivSqrtRecFN_small
   * C   =   320,640,1280 (=number of channels in the input tensor)
   * N = C / G =   10,20,40 (=number of channels per group) -> defines over how many channels the mean and range are calculated
 
-  * rangedGN(x_i) = (x_i - mean) / ( alpha * (max(x)-min(x)))
+  * rangeGN(x_i) = (x_i - mean) / ( alpha * (max(x)-min(x)))
 
   * where mean = sum(x_i) / (C/G), 
   * alpha = 1 / sqrt(2*ln(G)) = (1 / sqrt(2*ln(32)))
   * The implementation only supports BF16 numbers
   * GroupNorm happens on 10, 20 or 40 elements within one group at a time, so we need the whole group to be ready before GroupNorm can start, after a CONV3 or resadd.
   * TOTAL LATENCY = 3 * ceil(log2(N)) + 1(mult) + 1(reg) + 3(sub) + 11(div) + 1(mult)
+  * the pipelined reduce for maxVal and minVal isceil(log2(N)) but it's not on the longest latency path
   * For C = 320, N = 10, total latency = 3 * ceil(log2(10))+17 = 12+17=29 cc
   * For C = 640, N = 20, total latency = 3 * ceil(log2(20))+17 = 15+17=32 cc, however it is 31cc only, why?
   * For C = 1280, N = 40, total latency = 3 * ceil(log2(40))+17 = 18+17=35 cc, however it is 39cc, why?
@@ -105,9 +106,22 @@ class rangeGN(val C: Int) extends Module {
 
     Mux(signDiff, signA, ltIfSignSame)
   }
-  // === Compute max and min ===
-  val maxVal = io.in_a.reduce((a, b) => Mux(bf16LessThan(a, b), b, a)) // keep max
-  val minVal = io.in_a.reduce((a, b) => Mux(bf16LessThan(a, b), a, b)) // keep min
+  def pipelinedReduce[T <: Data](seq: Seq[T], f: (T, T) => T): T = { // log2(N)-stage pipelined reduction tree with registers between levels.
+    if (seq.length == 1) {
+      seq.head
+    } else {
+      val grouped = seq.grouped(2).map {
+        case Seq(a, b) => RegNext(f(a, b))
+        case Seq(a)    => a // odd element out, pass through
+      }.toSeq
+      pipelinedReduce(grouped, f)
+    }
+  }
+  // === Compute max and min === # added pipeline registers to reduce critical path delay: adds log2(N) cc latency, so 4 for N=10
+  val maxVal = pipelinedReduce(io.in_a, (a: UInt, b: UInt) => Mux(bf16LessThan(a, b), b, a)) // keep max
+  val minVal = pipelinedReduce(io.in_a, (a: UInt, b: UInt) => Mux(bf16LessThan(a, b), a, b)) // keep min
+  // val maxVal = io.in_a.reduce((a, b) => Mux(bf16LessThan(a, b), b, a)) // keep max
+  // val minVal = io.in_a.reduce((a, b) => Mux(bf16LessThan(a, b), a, b)) // keep min
 
 
   // === range = max - min ===
@@ -116,8 +130,8 @@ class rangeGN(val C: Int) extends Module {
   rangeSub.io.b := minVal ^ (1.U << 15) // flip sign of min to subtract
   // val range = ShiftRegister(rangeSub.io.res, 3) // because rangeSub has 3cc latency
   // val range = ShiftRegister(rangeSub.io.res, 0) 
-  val range = RegNext(rangeSub.io.res) // adds extra 1cc latency for the register: check if it fixes C.P.D
-  // val range = rangeSub.io.res
+  // val range = RegNext(rangeSub.io.res) // adds extra 1cc latency for the register: check if it fixes C.P.D
+  val range = rangeSub.io.res // just a wire
 
   // io.debugRangeOut := range // for debugging purposes, output the range
 
@@ -144,7 +158,8 @@ class rangeGN(val C: Int) extends Module {
 
   // === Multiply by recip_alpha ===
   val finalMuls = Seq.fill(N)(Module(new FPMult16ALT)) // 1cc latency per multiplier
-  val result = Reg(Vec(N, UInt(16.W))) // adds extra 1cc latency for the output register: check if it fixes C.P.D
+  // val result = Reg(Vec(N, UInt(16.W))) // adds extra 1cc latency for the output register: check if it fixes C.P.D
+  val result = Wire(Vec(N, UInt(16.W))) // without register
 
   for (i <- 0 until N) {
     finalMuls(i).io.a := divResults(i)
