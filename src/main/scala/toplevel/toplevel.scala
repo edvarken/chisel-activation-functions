@@ -101,7 +101,7 @@ class toplevel(val spatial_array_size: Int = 16, val DyTintBits: Int = 2, val Dy
  */
 object toplevelMain extends App {
     ChiselStage.emitSystemVerilogFile(
-        new toplevel(spatial_array_size = 16, DyTintBits = 2, DyTfracBits = 4, C = 320),
+        new toplevel(spatial_array_size = 16, DyTintBits = 2, DyTfracBits = 5, C = 320),
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info", "--lowering-options=" + List(
         "disallowLocalVariables", "disallowPackedArrays", "locationInfoStyle=wrapInAtSquareBracket").reduce(_ + "," + _)),
         args = Array("--target-dir", "generated2")
