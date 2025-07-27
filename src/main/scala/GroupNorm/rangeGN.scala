@@ -85,7 +85,7 @@ class rangeGN(val C: Int) extends Module {
   val numerators = Wire(Vec(N, UInt(16.W)))
 
   for (i <- 0 until N) { // N parallel subtractors
-    subtractors(i).io.a := io.in_a(i) // N parallel inputs(x_i)
+    subtractors(i).io.a := io.in_a(i) // N parallel inputs(x_i): TODO: add delay registers
     subtractors(i).io.b := mean ^ (1.U << 15) // flip sign of mean to subtract
     numerators(i) := subtractors(i).io.res
   }

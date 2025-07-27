@@ -118,12 +118,8 @@ def cumulative_bar_chart_transfo_block(systolic_array_size=16, staticmm_ws_cycle
 
 def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CPU=True):
     plt.rcParams["font.family"] = "Times New Roman"
-
-    
     ResNet_colors = ["#9231C2", "#366FC0", "#EF5048", "#979595"]
-    
     Transformer_colors = ["#632084", "#EA190E", '#366FC0', "#902E28", "#E1BD4F", '#979595']
-
     if nonlinearfunctions_on_CPU:
         ResNet_Block_layers = ["2 × CONV3", "2 × CPU GroupNorm", "2 × CPU SiLU", "2 × residual addition"]
         ResNet_Block_layers_cycles = [31749978, 307320340, 212658420, 1205378]
@@ -135,12 +131,12 @@ def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CP
             233255710, (3835741+5719444+13346980+6770071+5795875+1756063), 2410756]
     else:
         ResNet_Block_layers = ["2 × CONV3", "2 × range GN", "2 × LUT-based SiLU", "2 × residual addition"]
-        ResNet_Block_layers_cycles = [31749978, 10485760, 163840, 1205378]
+        ResNet_Block_layers_cycles = [31749978, 786432, 163840, 1205378]
         Transformer_Block_layers = [
             "2 × CONV1", "1 × LUT-based GELU", "4 × range GN or LUT-based LN",
             "1 × CPU SoftMax", "9 × MatMuls", "4 × residual addition"]
         Transformer_Block_layers_cycles = [
-            8958538, 5242880, (5242880+245760),
+            8958538, 81920, (393216+245760),
             233255710, (3835741+5719444+13346980+6770071+5795875+1756063), 2410756]
 
     plt.figure(figsize=(10, 2.8))  # Reduce height to bring bars closer
@@ -150,7 +146,6 @@ def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CP
 
     handles = []
     labels = []
-
     # Plot ResNet block layers
     left = 0
     for i in range(len(ResNet_Block_layers)):
@@ -168,9 +163,14 @@ def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CP
         left += Transformer_Block_layers_cycles[i]
 
     plt.xlabel('Cumulative Clock Cycles', fontsize=12)
-    plt.xticks(np.arange(0, 1.5e9, 1e8),
-               [f"{int(x/1e6):,}M" for x in np.arange(0, 1.5e9, 1e8)],
-               fontsize=12)
+    if nonlinearfunctions_on_CPU:
+        plt.xticks(np.arange(0, 1.5e9, 1e8),
+                [f"{int(x/1e6):,}M" for x in np.arange(0, 1.5e9, 1e8)],
+                fontsize=12)
+    else:
+        plt.xticks(np.arange(0, 3.5e8, 0.5e8),
+                [f"{int(x/1e6):,}M" for x in np.arange(0, 3.5e8, 0.5e8)],
+                fontsize=12)
     plt.yticks(y, ["ResNet Block", "Transformer Block"], fontsize=12, fontweight='bold')
 
     # Split legend: ResNet first, then Transformer, as two separate legends
@@ -200,12 +200,100 @@ def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CP
     second_legend.get_frame().set_linewidth(1)
     second_legend.get_title().set_fontweight('bold')
     first_legend.get_title().set_fontweight('bold')
-
     plt.tight_layout()
     plt.show()
 
 
+def cumulative_barchart_L0_resnet_and_transformer_block_highlight_the_speedup():
+    plt.rcParams["font.family"] = "Times New Roman"
+    ResNet_colors = ["#9231C2", "#366FC0", "#EF5048", "#979595"]
+    Transformer_colors = ["#632084", "#EA190E", '#366FC0', "#902E28", "#E1BD4F", '#979595']
 
+    ResNet_Block_layers_CPU = ["2 × CONV3", "2 × GroupNorm", "2 × SiLU", "2 × residual addition"]
+    ResNet_Block_layers_cycles_CPU = [31749978, 307320340, 212658420, 1205378]
+    Transformer_Block_layers_CPU = [
+        "2 × CONV1", "1 × GELU", "4 × GroupNorm or LayerNorm",
+        "1 × CPU SoftMax", "9 × MatMuls", "4 × residual addition"] # softmax stays CPU
+    Transformer_Block_layers_cycles_CPU = [
+        8958538, 478088080, (153660170+399038910),
+        233255710, (3835741+5719444+13346980+6770071+5795875+1756063), 2410756]
+    
+    ResNet_Block_layers_accel = ["2 × CONV3", "2 × range GN", "2 × LUT-based SiLU", "2 × residual addition"]
+    ResNet_Block_layers_cycles_accel = [31749978, 786432, 163840, 1205378]
+    Transformer_Block_layers_accel = [
+        "2 × CONV1", "1 × LUT-based GELU", "4 × range GN or LUT-based LN",
+        "1 × CPU SoftMax", "9 × MatMuls", "4 × residual addition"]
+    Transformer_Block_layers_cycles_accel = [
+        8958538, 81920, (393216+245760),
+        233255710, (3835741+5719444+13346980+6770071+5795875+1756063), 2410756]
+
+    plt.figure(figsize=(10, 2.8))  # Reduce height to bring bars closer
+    y = np.array([0.4, 0.3, 0.2, 0.1])  # Move bars closer together vertically
+    width = 0.05 # Width of the bars
+    handles = []
+    labels = []
+    # Plot ResNet block layers CPU
+    left = 0
+    for i in range(len(ResNet_Block_layers_CPU)):
+        bar = plt.barh(y[0], ResNet_Block_layers_cycles_CPU[i], width, left=left, color=ResNet_colors[i], alpha=0.8)
+        handles.append(bar[0])
+        labels.append(f'{ResNet_Block_layers_CPU[i]}') # updated the labels to be both for CPU as for accelerated
+        left += ResNet_Block_layers_cycles_CPU[i]
+    # Plot ResNet block layers accelerated
+    left = 0
+    for i in range(len(ResNet_Block_layers_accel)):
+        bar = plt.barh(y[1], ResNet_Block_layers_cycles_accel[i], width, left=left, color=ResNet_colors[i], alpha=0.8)
+        left += ResNet_Block_layers_cycles_accel[i]
+
+    # Plot Transformer block layers CPU
+    left = 0
+    for i in range(len(Transformer_Block_layers_CPU)):
+        bar = plt.barh(y[2], Transformer_Block_layers_cycles_CPU[i], width, left=left, color=Transformer_colors[i], alpha=0.8)
+        handles.append(bar[0])
+        labels.append(f'{Transformer_Block_layers_CPU[i]}') # updated the labels to be both for CPU as for accelerated
+        left += Transformer_Block_layers_cycles_CPU[i]
+    # Plot Transformer block layers accelerated
+    left = 0
+    for i in range(len(Transformer_Block_layers_accel)):
+        bar = plt.barh(y[3], Transformer_Block_layers_cycles_accel[i], width, left=left, color=Transformer_colors[i], alpha=0.8)
+        left += Transformer_Block_layers_cycles_accel[i]
+
+    plt.xlabel('Cumulative Clock Cycles', fontsize=12)
+    
+    plt.xticks(np.arange(0, 1.5e9, 1e8),
+            [f"{int(x/1e6):,}M" for x in np.arange(0, 1.5e9, 1e8)],
+            fontsize=12)
+    plt.yticks(y, ["ResNet Block on CPU", "ResNet Block accelerated", "Transformer Block on CPU", "Transformer Block accelerated"], fontsize=12, fontweight='bold')
+
+    # Split legend: ResNet first, then Transformer, as two separate legends
+    split_idx = len(ResNet_Block_layers_CPU)
+    resnet_handles = handles[:split_idx]
+    resnet_labels = labels[:split_idx]
+    transformer_handles = handles[split_idx:]
+    transformer_labels = labels[split_idx:]
+
+    # First legend: ResNet
+    first_legend = plt.legend(
+        resnet_handles, resnet_labels,
+        loc='center left', bbox_to_anchor=(1.05, 0.8),
+        fontsize=12, title="ResNet Block Layers", title_fontsize='12',
+        frameon=True, borderpad=1.2, borderaxespad=1.2, handlelength=2, framealpha=1, edgecolor='black'
+    )
+    plt.gca().add_artist(first_legend)
+    # Second legend: Transformer
+    second_legend = plt.legend(
+        transformer_handles, transformer_labels,
+        loc='center left', bbox_to_anchor=(1.05, 0.2),
+        fontsize=12, title="Transformer Block Layers", title_fontsize='12',
+        frameon=True, borderpad=1.2, borderaxespad=1.2, handlelength=2, framealpha=1, edgecolor='black'
+    )
+    # Make legend boxes equally sized
+    first_legend.get_frame().set_linewidth(1)
+    second_legend.get_frame().set_linewidth(1)
+    second_legend.get_title().set_fontweight('bold')
+    first_legend.get_title().set_fontweight('bold')
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == "__main__":
     # bar_chart_silu_speedup()
@@ -216,4 +304,6 @@ if __name__ == "__main__":
                                         # dynamicmm_attnV_ws_cycles_l0_l1_l2_l3=[5719444,387302,45260,4853],
                                         # dynamicmm_QKt_ws_cycles_l0_l1_l2_l3=[3835741,383162,45135,4941])
     
-    cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CPU=False)
+    # cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CPU=True)
+
+    cumulative_barchart_L0_resnet_and_transformer_block_highlight_the_speedup()
