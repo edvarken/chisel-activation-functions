@@ -49,12 +49,16 @@ import math
 
 def createBreakpoints(min, max, step, function):
     breakpoints = []
-    # Create breakpoints for the sigmoid function
+    # Create breakpoints for the sigmoid function, or for the silu function
     j= min
     while j < max+step:
         if function ==  "sigmoid-uniform-x":
             function_float = 1 / (1 + math.exp(-j))
-            function_float = round(function_float, (4+10))  # round to 14 decimal places
+        elif function == "silu-uniform-x":
+            function_float = j / (1 + math.exp(-j))
+        elif function == "gelu-uniform-x":
+            function_float = 0.5 * j * (1 + math.erf(j / math.sqrt(2)))
+        function_float = round(function_float, (4+10))  # round to 14 decimal places
         # Convert float32 to 4-byte representation (big-endian)
         function_bytes = struct.pack('>f', np.float32(function_float))
         # Take the first 2 bytes (most significant bits) for BF16, but round-to-nearest-and-to-even-if-tied 
@@ -114,8 +118,11 @@ def printBF16AndFPValues(values):
         value_bf16_bytes = mantissaRounder(value_bytes)
         # Convert to bit string
         value_bf16_bits = ''.join(f'{byte:08b}' for byte in value_bf16_bytes)
-        # convert the bf16 bits to an integer representation with 3 integer bits and 9 fractional bits
-        value_FP3intfrac9 = f"{int(x0):03b}_{int((x0 - int(x0)) * 2**9):09b}"
+        # Properly handle negative numbers for FP3intfrac9
+        int_part = int(abs(x0))
+        frac_part = int(round((abs(x0) - int_part) * 2**9))
+        sign = '1' if x0 < 0 else '0'
+        value_FP3intfrac9 = f"{sign}_{int_part:03b}_{frac_part:09b}"
         # Convert the bf16 back to its float representation
         function_bf16_int = int(value_bf16_bits, 2) << 16  # Shift back to 32-bit float position
         function_bf16_float = struct.unpack('>f', struct.pack('>I', function_bf16_int))[0]
@@ -217,14 +224,37 @@ if __name__ == "__main__":
     # printBF16AndFPValues(mirrored_y_intercepts)
 
     #################################  36 segments total, first 4 then 32 segments  ######################################
-    breakpoints32EqualXsegments = createBreakpoints(2, 6, (6-2)/32, "sigmoid-uniform-x") # 33 brkpts
-    slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints32EqualXsegments)
-    print(slopes)
-    printBF16AndFPValues(breakpoints32EqualXsegments)
-    print("\nBF16 and FP values for the second 32 segments: slopes:")
-    printBF16AndFPValues(slopes)
-    print("\nBF16 and FP values for the second 32 segments: y-intercepts:")
-    printBF16AndFPValues(y_intercepts)
-    print("\nBF16 and FP values for the second 32 segments: mirrored y-intercepts:")
-    printBF16AndFPValues(mirrored_y_intercepts)
+    # breakpoints32EqualXsegments = createBreakpoints(2, 6, (6-2)/32, "sigmoid-uniform-x") # 33 brkpts
+    # slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints32EqualXsegments)
+    # print(slopes)
+    # printBF16AndFPValues(breakpoints32EqualXsegments)
+    # print("\nBF16 and FP values for the second 32 segments: slopes:")
+    # printBF16AndFPValues(slopes)
+    # print("\nBF16 and FP values for the second 32 segments: y-intercepts:")
+    # printBF16AndFPValues(y_intercepts)
+    # print("\nBF16 and FP values for the second 32 segments: mirrored y-intercepts:")
+    # printBF16AndFPValues(mirrored_y_intercepts)
     # print("\n=========================================================\n")
+
+
+    #################################  32 segments total, first 16 in (-8,0) then 16 in (0,8)  ######################################
+    breakpoints24EqualXsegmentsSILU = createBreakpoints(-6, 6, (6-(-6))/24, "silu-uniform-x") # 25 brkpts
+    slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints24EqualXsegmentsSILU)
+    print("\n====================== SiLU ========================\n")
+    print(slopes)
+    printBF16AndFPValues(breakpoints24EqualXsegmentsSILU)
+    print("\nBF16 and FP values for the 24 segments: slopes:")
+    printBF16AndFPValues(slopes)
+    print("\nBF16 and FP values for the 24 segments: y-intercepts:")
+    printBF16AndFPValues(y_intercepts)
+    print("\n====================================================\n")
+    print("\n====================== GELU ========================\n")
+    breakpoints24EqualXsegmentsGELU = createBreakpoints(-6, 6, (6-(-6))/24, "gelu-uniform-x") # 25 brkpts
+    slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(breakpoints24EqualXsegmentsGELU)
+    print(slopes)
+    printBF16AndFPValues(breakpoints24EqualXsegmentsGELU)
+    print("\nBF16 and FP values for the 24 segments: slopes:")
+    printBF16AndFPValues(slopes)
+    print("\nBF16 and FP values for the 24 segments: y-intercepts:")
+    printBF16AndFPValues(y_intercepts)
+    print("\n====================================================\n")

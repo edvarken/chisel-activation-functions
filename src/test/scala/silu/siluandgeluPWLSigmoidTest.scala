@@ -16,9 +16,9 @@ import math.sqrt
 import math.exp 
 
 class siluandgeluPWLSigmoidTest extends AnyFreeSpec with Matchers {
-    var max_test_value = 8.0f // declare the maximum test value
+    var max_test_value = 6.0f // declare the maximum test value
     var positive_only = false
-    var N = 200 // declare N
+    var N = 500 // declare N
     if (positive_only) {
         N = N/2 // if positive_only, then N is halved since we only test in [0, max_test_value]
         println(f"${N} inputs in the range: [0.0, ${max_test_value}]")

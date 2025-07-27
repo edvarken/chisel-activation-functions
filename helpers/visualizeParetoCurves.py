@@ -11,7 +11,9 @@ SILU_DATA = {
     "SiLU2a":  {"MSE": 3.52e-3,  "area": 1495.48, "color": "#366FC0", "marker": 's'},
     "SiLU2b":  {"MSE": 7.97e-4,  "area": 1722.56, "color": "#366FC0", "marker": 's'},
     "SiLU2c":  {"MSE": 4.50e-4,  "area": 1956.64, "color": "#366FC0", "marker": 's'},
-    "SiLU3":   {"MSE": 4.86e-3,  "area": 1758.40, "color":  "#366FC0", "marker": '^'},
+    "SiLU3":   {"MSE": 3.62e-3,  "area": 1758.40, "color":  "#366FC0", "marker": '^'},
+    "SiLU4a":   {"MSE": 1.19e-4, "area": 3697.96, "color":  "#366FC0", "marker": 'o'},
+    "SiLU4b":   {"MSE": 4.57e-5, "area": 3255.00, "color":  "#366FC0", "marker": 'o'},
 }
 
 GELU_DATA = {
@@ -24,6 +26,9 @@ GELU_DATA = {
     "GELU2a":  {"MSE": 1.03e-3,  "area": 1495.48, "color": "#9231C2", "marker": 's'},
     "GELU2b":  {"MSE": 3.38e-4,  "area": 1722.56, "color": "#9231C2", "marker": 's'},
     "GELU2c":  {"MSE": 2.76e-4,  "area": 1956.64, "color": "#9231C2", "marker": 's'},
+    "GELU3":   {"MSE": 6.26e-4,  "area": 1758.40, "color":  "#9231C2", "marker": '^'},
+    "GELU4a":   {"MSE": 1.36e-4, "area": 3697.96, "color":  "#9231C2", "marker": 'o'},
+    "GELU4b":   {"MSE": 9.25e-5, "area": 3255.00, "color":  "#9231C2", "marker": 'o'},
 }
 
 DYT_DATA = {
@@ -76,9 +81,10 @@ def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0
 
     # Define legend groups and their descriptions
     legend_groups = [
-        ("1", '*', "direct LUT"),
-        ("2", 's', "Inverted Sigmoid LUT"),
-        ("3", '^', "PPA"),
+        ("1", '*', "zero-order direct LUT"),
+        ("2", 's', "zero-order Inverted Sigmoid LUT"),
+        ("3", '^', "h-SiLU/GELU"),
+        ("4", 'o', "first-order Sigmoid LUT"),
     ]
 
     # Create handles for each group
@@ -99,7 +105,7 @@ def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0
 def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax=2000, ymin=0, ymax=0.1, n_yticks=21):
     plt.figure(figsize=(12, 8))
     plt.rcParams["font.family"] = "Times New Roman"
-    plt.title("MSE versus Area for SiLU, GELU, and DyT Variants", fontsize=18, fontweight='bold', pad=75)
+    plt.title("MSE versus Area for SiLU, GELU, and DyT Variants", fontsize=18, fontweight='bold', pad=85)
     ax = plt.gca() # Get current axes
     plt.xlim(xmin, xmax)
     # Ensure ymin is positive for log scale
@@ -136,12 +142,15 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
 
     # Define legend groups and their descriptions
     legend_groups = [
-        ("SiLU", "#366FC0", '*', "direct LUT"),
-        ("SiLU", "#366FC0", 's', "Inverted Sigmoid LUT"),
-        ("SiLU", "#366FC0", '^', "PPA"),
-        ("GELU", "#9231C2", '*', "direct LUT"),
-        ("GELU", "#9231C2", 's', "Inverted Sigmoid LUT"),
-        ("DyT", "#EF5048", '*', "direct LUT"),
+        ("SiLU", "#366FC0", '*', "zero-order direct LUT"),
+        ("SiLU", "#366FC0", 's', "zero-order Inverted Sigmoid LUT"),
+        ("SiLU", "#366FC0", '^', "h-SiLU/GELU"),
+        ("SiLU", "#366FC0", 'o', "first-order Sigmoid LUT"),
+        ("GELU", "#9231C2", '*', "zero-order direct LUT"),
+        ("GELU", "#9231C2", 's', "zero-order Inverted Sigmoid LUT"),
+        ("GELU", "#9231C2", '^', "h-SiLU/GELU"),
+        ("GELU", "#9231C2", 'o', "first-order Sigmoid LUT"),
+        ("DyT", "#EF5048", '*', "zero-order direct LUT"),
     ]
 
     # Create handles for each group
@@ -162,4 +171,4 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
 if __name__ == "__main__":
     # pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.005, n_yticks=21)
     # pareto_plot(func="GELU", data=GELU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.0010, n_yticks=16)
-    pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=500, xmax=2000, ymin=0, ymax=0.1, n_yticks=11)
+    pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=500, xmax=4000, ymin=0, ymax=0.1, n_yticks=11)
