@@ -23,4 +23,4 @@ lazy val root = (project in file("."))
     addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
   )
 
-// there are 4 main packages within this project: silu, gelu, DyT and GroupNorm
+// there are 6 packages within this project: DyT, gelu, GroupNorm, hardfloat, silu and toplevel
