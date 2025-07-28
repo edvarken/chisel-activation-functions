@@ -19,27 +19,27 @@ SILU_DATA = {
 }
 
 GELU_DATA = {
-    "GELU1a":  {"MSE": 2.70e-4,  "area": 642.04, "color": "#9231C2", "marker": '*'},
-    "GELU1b":  {"MSE": 4.99e-5,  "area": 946.68, "color": "#9231C2", "marker": '*'},
-    "GELU1c":  {"MSE": 8.31e-6,  "area": 1371.16, "color": "#9231C2", "marker": '*'},
-    "GELU1d":  {"MSE": 3.97e-4,  "area": 796.60, "color": "#9231C2", "marker": '*'},
-    "GELU1e":  {"MSE": 4.99e-5,  "area": 1204.28, "color": "#9231C2", "marker": '*'},
-    "GELU1f":  {"MSE": 8.31e-6,  "area": 1695.68, "color": "#9231C2", "marker": '*'},
-    "GELU2a":  {"MSE": 1.03e-3,  "area": 1495.48, "color": "#9231C2", "marker": 's'},
-    "GELU2b":  {"MSE": 3.38e-4,  "area": 1722.56, "color": "#9231C2", "marker": 's'},
-    "GELU2c":  {"MSE": 2.76e-4,  "area": 1956.64, "color": "#9231C2", "marker": 's'},
+    "GELU1a":  {"MSE": 2.77e-4,  "area": 642.04, "color": "#9231C2", "marker": '*'},
+    "GELU1b":  {"MSE": 4.76e-5,  "area": 946.68, "color": "#9231C2", "marker": '*'},
+    "GELU1c":  {"MSE": 7.99e-6,  "area": 1371.16, "color": "#9231C2", "marker": '*'},
+    "GELU1d":  {"MSE": 4.03e-4,  "area": 796.60, "color": "#9231C2", "marker": '*'},
+    "GELU1e":  {"MSE": 4.76e-5,  "area": 1204.28, "color": "#9231C2", "marker": '*'},
+    "GELU1f":  {"MSE": 7.99e-6,  "area": 1695.68, "color": "#9231C2", "marker": '*'},
+    "GELU2a":  {"MSE": 9.37e-3,  "area": 1495.48, "color": "#9231C2", "marker": 's'},
+    "GELU2b":  {"MSE": 3.25e-4,  "area": 1722.56, "color": "#9231C2", "marker": 's'},
+    "GELU2c":  {"MSE": 2.55e-4,  "area": 1956.64, "color": "#9231C2", "marker": 's'},
     "GELU3":   {"MSE": 6.26e-4,  "area": 1758.40, "color":  "#9231C2", "marker": '^'},
     "GELU4a":   {"MSE": 1.36e-4, "area": 3697.96, "color":  "#9231C2", "marker": 'o'},
     "GELU4b":   {"MSE": 9.25e-5, "area": 3255.00, "color":  "#9231C2", "marker": 'o'},
 }
 
 DYT_DATA = {
-    "DyT1a":  {"MSE": 3.72e-4,  "area": 1069.60, "color": "#EF5048", "marker": '*'},
-    "DyT1b":  {"MSE": 7.56e-5,  "area": 1172.08, "color": "#EF5048", "marker": '*'},
-    "DyT1c":  {"MSE": 2.63e-5,  "area": 1296.96 , "color": "#EF5048", "marker": '*'},
-    "DyT1d":  {"MSE": 2.93e-4,  "area": 1120.00, "color": "#EF5048", "marker": '*'},
-    "DyT1e":  {"MSE": 8.13e-5,  "area": 1212.96, "color": "#EF5048", "marker": '*'},
-    "DyT1f":  {"MSE": 9.24e-5,  "area": 1309.28, "color": "#EF5048", "marker": '*'},
+    "DyT1a":  {"MSE": 3.35e-4,  "area": 1069.60, "color": "#EF5048", "marker": '*'},
+    "DyT1b":  {"MSE": 6.99e-5,  "area": 1172.08, "color": "#EF5048", "marker": '*'},
+    "DyT1c":  {"MSE": 2.40e-5,  "area": 1296.96 , "color": "#EF5048", "marker": '*'},
+    "DyT1d":  {"MSE": 3.33e-4,  "area": 1120.00, "color": "#EF5048", "marker": '*'},
+    "DyT1e":  {"MSE": 6.92e-5,  "area": 1212.96, "color": "#EF5048", "marker": '*'},
+    "DyT1f":  {"MSE": 1.85e-5,  "area": 1309.28, "color": "#EF5048", "marker": '*'},
 }
 
 def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.005, n_yticks=21):

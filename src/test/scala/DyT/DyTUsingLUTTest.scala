@@ -13,7 +13,7 @@ import math.tanh
 class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
     var verbose = 0 
     var max_test_value = 8.0f
-    var N = 100
+    var N = 200
     "DyTUsingLUTTest should correctly apply an approximate DyT value using a Lookup Table with 128 entries for [-4, 4] on BF16 input * alpha" in {
         simulate(new DyTUsingLUT(intBits = 2, fracBits = 4)) { c =>
             def toBinary(i: Int, digits: Int = 16) =
@@ -81,8 +81,8 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"DyT LUT (128 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
             println(f"DyT LUT (128 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
             println(f"DyT LUT (128 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
@@ -156,8 +156,8 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"DyT LUT (256 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
             println(f"DyT LUT (256 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
             println(f"DyT LUT (256 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
@@ -231,8 +231,8 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"DyT LUT (512 entries in [-4, 4]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
             println(f"DyT LUT (512 entries in [-4, 4]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
             println(f"DyT LUT (512 entries in [-4, 4]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
@@ -306,8 +306,8 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"DyT LUT (256 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
             println(f"DyT LUT (256 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
             println(f"DyT LUT (256 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
@@ -381,8 +381,8 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"DyT LUT (512 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
             println(f"DyT LUT (512 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
             println(f"DyT LUT (512 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
@@ -390,7 +390,7 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
     }
 
     "DyTUsingLUTTest should correctly apply an approximate DyT value using a Lookup Table with 1024 entries for [-8, 8] on BF16 input * alpha" in {
-        simulate(new DyTUsingLUT(intBits = 3, fracBits = 5)) { c =>
+        simulate(new DyTUsingLUT(intBits = 3, fracBits = 6)) { c =>
             def toBinary(i: Int, digits: Int = 16) =
                 String.format("%" + digits + "s", i.toBinaryString).replace(' ', '0')
             var tolerance = 0.03125f
@@ -456,8 +456,8 @@ class DyTUsingLUTTest extends AnyFreeSpec with Matchers {
                 mse_MAE += diff.abs
                 a += step
             }
-            mse /= N.toFloat
-            mse_MAE /= N.toFloat
+            mse /= (N+1).toFloat
+            mse_MAE /= (N+1).toFloat
             println(f"DyT LUT (1024 entries in [-8, 8]): Mean Squared Error (MSE) for ${N} uniformly spaced inputs in [-8,8]: ${mse}")
             println(f"DyT LUT (1024 entries in [-8, 8]): Mean Absolute Error (MAE) for ${N} uniformly spaced inputs in [-8,8]: ${mse_MAE}")
             println(f"DyT LUT (1024 entries in [-8, 8]): Maximum Absolute Error (Max AE) for ${N} uniformly spaced inputs in [-8,8]: ${max_AE}")
