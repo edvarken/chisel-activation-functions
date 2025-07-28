@@ -145,15 +145,15 @@ Tests can also be run individually, below are a few examples:
 - Run test for h-SiLU and h-GELU: `sbt 'testOnly silu.hsilugeluTest'`
 - Run test for siluUsingLUT.scala: `sbt 'testOnly silu.siluUsingLUTTest'`
 - Run test for DyTUsingLUT.scala: `sbt 'testOnly DyT.DyTUsingLUTTest'`
-- Run test for the first-order approx of SiLU and GELU `sbt "testOnly silu.siluandgeluPWLSigmoidTest"` 
-- Run test for rangeGN: `sbt "testOnly GroupNorm.rangeGNTest"`
+- Run test for the first-order approx of SiLU and GELU `sbt 'testOnly silu.siluandgeluPWLSigmoidTest'` 
+- Run test for rangeGN: `sbt 'testOnly GroupNorm.rangeGNTest'`
 
 ## Generate SystemVerilog RTL files
 Use `sbt run` to generate systemverilog files. Terminal will ask what file is toplevel if multiple files have `ChiselStage.emitSystemVerilogFile` uncommented. Generated files are saved into `generated/`
 
 If `sbt run` gives errors saying "no Main Class detected", try to directly run the generation for a particular module e.g.:
-- `sbt runMain GroupNorm.rangeGNMain`
-- `sbt runMain toplevel.toplevelMain` 
+- `sbt 'runMain GroupNorm.rangeGNMain'`
+- `sbt 'runMain toplevel.toplevelMain'` 
 
 ### Acknowledgements
 Credits to https://github.com/zhemao/chisel-float/ for the floating point multiplier and adder. See LICENSE

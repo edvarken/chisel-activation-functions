@@ -196,7 +196,7 @@ class siluPWL28Segments extends Module {
  * Generate Verilog sources and save it in generated/siluPWL28Segments.sv
  * Generate the SystemVerilog file when using 'sbt run'
  */
-object siluPWL28Segments extends App {
+object siluPWL28SegmentsMain extends App {
     ChiselStage.emitSystemVerilogFile(
         new siluPWL28Segments,
         firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
