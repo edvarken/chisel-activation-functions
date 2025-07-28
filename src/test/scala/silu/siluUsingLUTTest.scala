@@ -254,6 +254,7 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
     "siluUsingLUTTest should correctly apply an approximate SiLU value using a Lookup Table with 1024 entries for [-8, 8] on BF16 input numbers" in {
         simulate(new siluUsingLUT(intBits = 3, fracBits = 6)) { c =>
             var tolerance = 0.00390625f*8
+            verbose = 1
             c.io.in_a.poke("b0_00000000_0000000".U(16.W))
             c.clock.step(1)
             c.io.out_a.expect("b0_00000000_0000000".U(16.W))
@@ -274,14 +275,15 @@ class siluUsingLUTTest extends AnyFreeSpec with Matchers {
                 val a_upper16bits_float = java.lang.Float.intBitsToFloat((BigInt(a_upper16bits.litValue.toInt) << 16).toInt)
                 val expected = (a_upper16bits_float / (1 + math.exp(-a_upper16bits_float))).toFloat // SiLU formula
                 val diff = expected - java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)
-                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 if (verbose > 0) {
-                    println(f"input x-value: ${a_upper16bits_float}")
-                    println(f"output silu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
-                    println(f"expected exact silu value: ${expected}")
-                    println(f"Difference: ${diff}")
-                    println("###########")
+                    print(s"${diff}, ")
+                    // println(f"input x-value: ${a_upper16bits_float}")
+                    // println(f"output silu-LUT-approx. value: ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
+                    // println(f"expected exact silu value: ${expected}")
+                    // println(f"Difference: ${diff}")
+                    // println("###########")
                 }
+                assert(diff.abs <= tolerance, s"Expected ${expected} but got ${java.lang.Float.intBitsToFloat((BigInt(c.io.out_a.peek().litValue.toInt) << 16).toInt)}")
                 mse += diff * diff
                 if (diff.abs > max_AE) {
                     max_AE = diff.abs

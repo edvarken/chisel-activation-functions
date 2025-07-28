@@ -14,8 +14,8 @@ SILU_DATA = {
     "SiLU3":   {"MSE": 3.62e-3,  "area": 1758.40, "color":  "#366FC0", "marker": '^'},
     "SiLU4a":   {"MSE": 1.19e-4, "area": 3697.96, "color":  "#366FC0", "marker": 'o'},
     "SiLU4b":   {"MSE": 4.57e-5, "area": 3255.00, "color":  "#366FC0", "marker": 'o'},
-    "SiLU5a":   {"MSE": 8.53e-5, "area": 0000.00, "color":  "#366FC0", "marker": '<'},
-    "SiLU5b":   {"MSE": 7.23e-5, "area": 0000.00, "color":  "#366FC0", "marker": '<'},
+    "SiLU5a":   {"MSE": 8.53e-5, "area": 2062.48, "color":  "#366FC0", "marker": '<'},
+    "SiLU5b":   {"MSE": 7.23e-5, "area": 2133.88, "color":  "#366FC0", "marker": '<'},
 }
 
 GELU_DATA = {
@@ -75,19 +75,19 @@ def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0
     ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
 
     # Place axis labels at the center of each axis, just outside the plot area
-    ax.set_xlabel('Area [um²] (lower is better)', fontsize=16, labelpad=20)
-    ax.set_ylabel('MSE (lower is better)', fontsize=16, labelpad=20)
+    ax.set_xlabel('Area [um²] (lower is better)', fontsize=17, labelpad=25)
+    ax.set_ylabel('MSE (lower is better)', fontsize=17, labelpad=18)
 
     # add legend above the plot, box the legend, add texts: 1 is PPA, 2 is LUT, 3 is inverted Sigmoid LUT
     import matplotlib.patches as mpatches
 
     # Define legend groups and their descriptions
     legend_groups = [
-        ("1", '*', "zero-order direct LUT"),
-        ("2", 's', "zero-order Inverted Sigmoid LUT"),
+        ("1", '*', "zero-order direct"),
+        ("2", 's', "zero-order Inverted Sigmoid"),
         ("3", '^', "h-SiLU/GELU"),
-        ("4", 'o', "first-order Sigmoid LUT"),
-        ("5", '<', "first-order direct LUT"),
+        ("4", 'o', "first-order Sigmoid"),
+        ("5", '<', "first-order direct"),
     ]
 
     # Create handles for each group
@@ -105,10 +105,10 @@ def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0
     plt.show()
 
 
-def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax=2000, ymin=0, ymax=0.1, n_yticks=21):
+def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax=2000, ymin=0, ymax=0.01, n_yticks=21, with_grid=False):
     plt.figure(figsize=(12, 8))
     plt.rcParams["font.family"] = "Times New Roman"
-    plt.title("MSE versus Area for SiLU, GELU, and DyT Variants", fontsize=18, fontweight='bold', pad=85)
+    plt.title("MSE versus Area for SiLU, GELU, and DyT Variants", fontsize=18, fontweight='bold', pad=100)
     ax = plt.gca() # Get current axes
     plt.xlim(xmin, xmax)
     # Ensure ymin is positive for log scale
@@ -139,22 +139,22 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
     ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
 
     # Place axis labels at the center of each axis, just outside the plot area
-    ax.set_xlabel('Area [um²]', fontsize=16, labelpad=20)
-    ax.set_ylabel('MSE', fontsize=16, labelpad=10, rotation=0, ha='right', va='center')
+    ax.set_xlabel('Area [um²]', fontsize=17, labelpad=5)
+    ax.set_ylabel('MSE', fontsize=17, labelpad=5, rotation=0, ha='right', va='center')
     ax.set_yscale('log')  # Use logarithmic scale for y-axis
 
     # Define legend groups and their descriptions
     legend_groups = [
-        ("SiLU", "#366FC0", '*', "zero-order direct LUT"),
-        ("SiLU", "#366FC0", 's', "zero-order Inverted Sigmoid LUT"),
-        ("SiLU", "#366FC0", '^', "h-SiLU/GELU"),
-        ("SiLU", "#366FC0", 'o', "first-order Sigmoid LUT"),
-        ("SiLU", "#366FC0", '<', "first-order direct LUT"),
-        ("GELU", "#9231C2", '*', "zero-order direct LUT"),
-        ("GELU", "#9231C2", 's', "zero-order Inverted Sigmoid LUT"),
-        ("GELU", "#9231C2", '^', "h-SiLU/GELU"),
-        ("GELU", "#9231C2", 'o', "first-order Sigmoid LUT"),
-        ("DyT", "#EF5048", '*', "zero-order direct LUT"),
+        ("SiLU1", "#366FC0", '*', "zero-order direct"),
+        ("SiLU2", "#366FC0", 's', "zero-order Inverted Sigmoid"),
+        ("SiLU3", "#366FC0", '^', "h-SiLU"),
+        ("SiLU4", "#366FC0", 'o', "first-order Sigmoid"),
+        ("SiLU5", "#366FC0", '<', "first-order direct"),
+        ("GELU1", "#9231C2", '*', "zero-order direct"),
+        ("GELU2", "#9231C2", 's', "zero-order Inverted Sigmoid"),
+        ("GELU3", "#9231C2", '^', "h-GELU"),
+        ("GELU4", "#9231C2", 'o', "first-order Sigmoid"),
+        ("DyT", "#EF5048", '*', "zero-order direct"),
     ]
 
     # Create handles for each group
@@ -168,6 +168,10 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
     ax.legend(handles=handles, loc='lower center', bbox_to_anchor=(0.5, 1.02),
               fontsize=13, frameon=True, ncol=3)
 
+    if with_grid:
+        ax.yaxis.grid(True, which='both', linestyle='--', linewidth=0.7)
+        ax.xaxis.grid(True, which='both', linestyle='--', linewidth=0.7)
+
     plt.tight_layout()
     plt.show()
 
@@ -175,4 +179,4 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
 if __name__ == "__main__":
     # pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.005, n_yticks=21)
     # pareto_plot(func="GELU", data=GELU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.0010, n_yticks=16)
-    pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=500, xmax=4000, ymin=0, ymax=0.1, n_yticks=11)
+    pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=500, xmax=4000, ymin=0, ymax=0.01, n_yticks=11, with_grid=False)
