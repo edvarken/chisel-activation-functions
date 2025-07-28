@@ -179,4 +179,4 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
 if __name__ == "__main__":
     # pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.005, n_yticks=21)
     # pareto_plot(func="GELU", data=GELU_DATA, xmin=0, xmax=2000, ymin=0, ymax=0.0010, n_yticks=16)
-    pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=500, xmax=4000, ymin=0, ymax=0.01, n_yticks=11, with_grid=False)
+    pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=500, xmax=4000, ymin=0, ymax=0.01, n_yticks=11, with_grid=True)
