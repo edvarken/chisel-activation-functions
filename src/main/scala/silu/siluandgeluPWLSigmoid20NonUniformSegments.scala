@@ -10,7 +10,7 @@ import _root_.circt.stage.ChiselStage // needed for ChiselStage.emitSystemVerilo
   * first 4 segments: equally spaced x-values between 0 and 2
   * second 16 segments: equally spaced x-values between 2 and 6
   *
-  * For negative numbers, q' = 1 - q is exploited, halving the needed slopes, but doubling the needed intercepts.
+  * For negative numbers, q' = 1 - q is exploited, we can reuse slopes, but doubling the needed intercepts.
   * if abs(numbers) > 6, sigmoid = 0 or 1 depending on sign, so the silu and gelu just return 0 or the input itself.
   * The implementation only supports BF16 inputs and outputs, but uses fixed point representation internally.
   */

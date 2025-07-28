@@ -14,6 +14,8 @@ SILU_DATA = {
     "SiLU3":   {"MSE": 3.62e-3,  "area": 1758.40, "color":  "#366FC0", "marker": '^'},
     "SiLU4a":   {"MSE": 1.19e-4, "area": 3697.96, "color":  "#366FC0", "marker": 'o'},
     "SiLU4b":   {"MSE": 4.57e-5, "area": 3255.00, "color":  "#366FC0", "marker": 'o'},
+    "SiLU5a":   {"MSE": 8.53e-5, "area": 0000.00, "color":  "#366FC0", "marker": '<'},
+    "SiLU5b":   {"MSE": 7.23e-5, "area": 0000.00, "color":  "#366FC0", "marker": '<'},
 }
 
 GELU_DATA = {
@@ -85,6 +87,7 @@ def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0
         ("2", 's', "zero-order Inverted Sigmoid LUT"),
         ("3", '^', "h-SiLU/GELU"),
         ("4", 'o', "first-order Sigmoid LUT"),
+        ("5", '<', "first-order direct LUT"),
     ]
 
     # Create handles for each group
@@ -146,6 +149,7 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
         ("SiLU", "#366FC0", 's', "zero-order Inverted Sigmoid LUT"),
         ("SiLU", "#366FC0", '^', "h-SiLU/GELU"),
         ("SiLU", "#366FC0", 'o', "first-order Sigmoid LUT"),
+        ("SiLU", "#366FC0", '<', "first-order direct LUT"),
         ("GELU", "#9231C2", '*', "zero-order direct LUT"),
         ("GELU", "#9231C2", 's', "zero-order Inverted Sigmoid LUT"),
         ("GELU", "#9231C2", '^', "h-SiLU/GELU"),
