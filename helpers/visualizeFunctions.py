@@ -509,6 +509,128 @@ def visualizeSigmoidAndFirstOrderApprox():
     plt.tight_layout()
     plt.show()
 
+#### visualize derivatives of SiLU
+def mantissaRounder(function_bytes):
+    """
+    Rounds the mantissa of a float32 to the nearest BF16 value, if tied round to even.
+    """
+    # Take the first 2 bytes (most significant bits) for BF16
+    rounded_function_bf16_bytes = function_bytes[:2]
+    # Convert the last 2 bytes to an integer for comparison
+    mantissa_tail = int.from_bytes(function_bytes[2:4], byteorder='big')
+    retained_mantissa = int.from_bytes(rounded_function_bf16_bytes, byteorder='big')
+    if ((mantissa_tail > 0x8000) or (mantissa_tail==0x8000 and retained_mantissa&1)): # If (bit 15 is 1 and any lower bit is 1) or if (bit 15 is 1 and LSB of retained 7-bit mantissa is 1), round up
+        # Convert the first 2 bytes to int, add 1, then back to bytes
+        rounded_bf16_int = int.from_bytes(rounded_function_bf16_bytes, byteorder='big') + 1 # rounding up
+        return rounded_bf16_int.to_bytes(2, byteorder='big')
+    else:
+        return rounded_function_bf16_bytes # else we can just truncate(=rounding down)
+
+def createBreakpoints(min, max, step, function):
+    breakpoints = []
+    # Create breakpoints for the sigmoid function, or for the silu function
+    j= min
+    while j < max+step:
+        if function ==  "sigmoid-uniform-x":
+            function_float = 1 / (1 + math.exp(-j))
+        elif function == "silu-uniform-x":
+            function_float = j / (1 + math.exp(-j))
+        elif function == "gelu-uniform-x":
+            function_float = 0.5 * j * (1 + math.erf(j / math.sqrt(2)))
+        function_float = round(function_float, (4+10))  # round to 14 decimal places
+        # Convert float32 to 4-byte representation (big-endian)
+        function_bytes = struct.pack('>f', np.float32(function_float))
+        # Take the first 2 bytes (most significant bits) for BF16, but round-to-nearest-and-to-even-if-tied 
+        function_bf16_bytes = mantissaRounder(function_bytes)
+        # Convert to bit string
+        function_bf16_bits = ''.join(f'{byte:08b}' for byte in function_bf16_bytes)
+        # Convert the bf16 back to its float representation
+        function_bf16_int = int(function_bf16_bits, 2) << 16  # Shift back to 32-bit float position
+        function_bf16_float = struct.unpack('>f', struct.pack('>I', function_bf16_int))[0]
+        # breakpoints.append((round(j,14), round(function_bf16_float, 14))) # round to 9 decimal places
+        breakpoints.append((j, function_float))
+        j += step
+    return breakpoints
+
+def calculateSlopesAndYIntercepts(breakpoints):
+    slopes = []
+    y_intercepts = []
+    mirrored_y_intercepts = []
+    for i in range(len(breakpoints) - 1):
+        x0, y0 = breakpoints[i]
+        x1, y1 = breakpoints[i + 1]
+        slope = (y1 - y0) / (x1 - x0)
+        slopes.append(slope)
+        y_intercept = y0 - slope * x0
+        y_intercepts.append(y_intercept)
+        mirrored_y_intercepts.append(1 - y_intercept)  # For the mirrored function
+    return slopes, y_intercepts, mirrored_y_intercepts
+
+def visualizeSiLUAndDerivatives():
+    plot = plt.figure(figsize=(12, 10)) 
+    plt.rcParams["font.family"] = "Times New Roman"
+    xmin = -4
+    xmax = 4
+    ymin = -4
+    ymax = 4
+
+    ax = plt.gca()
+    plt.xlim(xmin, xmax)
+    plt.ylim(ymin, ymax)
+    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
+    plt.yticks(np.arange(ymin, ymax+1, 1), fontsize=14)
+
+    colors = ['blue', 'black'] # blue for derivatives
+
+    # real SiLU
+    x = np.linspace(xmin, xmax, 1000)
+    exact_silu = x / (1 + np.exp(-x))
+    plt.rcParams['text.usetex'] = True
+    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=1.5)
+
+    # plot the derivatives for 24 input segments between (-6,6)
+    brkpts = createBreakpoints(-4, 4, 1.0, "silu-uniform-x")  # show less segments for better visibility
+    slopes, y_intercepts, mirrored_y_intercepts = calculateSlopesAndYIntercepts(brkpts) # calculate slopes and y-intercepts for the segments
+
+    # plot the derivatives, showing that they intersect the y-axis at same locations for inputs left and right of the origin.
+    print(len(slopes))
+    for i in range(len(slopes)):
+        if (i == len(slopes)/2 or i == len(slopes)/2 - 1):  # skip the middle segment to avoid double plotting
+            continue  
+        # stop at the intercept with y-axis
+        if i < len(slopes) / 2:  # left side of the origin
+            x = np.linspace(-4, 0, 100)
+            plt.plot(x, slopes[i]*x + y_intercepts[i], color=colors[1], linestyle='--', linewidth=1, label='local derivative' if i == 0 else "")
+        else:  # right side of the origin
+            x = np.linspace(0, 4, 100)
+            plt.plot(x, slopes[i]*x + y_intercepts[i], color=colors[1], linestyle='--', linewidth=1, label='local derivative' if i == 0 else "")
+    # place dots on the y-axis at the intercepts
+    for i in range(len(y_intercepts)):
+        if (i == len(slopes)/2 or i == len(slopes)/2 - 1):  # skip the middle segment to avoid double plotting
+            continue  
+        else:
+            plt.plot(0, y_intercepts[i], 'o', color=colors[1], markersize=3)
+
+    # Move spines to center
+    ax.spines['left'].set_position('center')
+    ax.spines['bottom'].set_position('center')
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+
+    # Make axes arrows (ensure arrow tips are visible within figure bounds)
+    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    # Use slightly less than the axis limits for arrow tips
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+
+    # Place axis labels at arrow tips, just inside the bounds
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.25), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=16, fontweight='bold', clip_on=False)
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == "__main__":
     # visualizeSiLUAndApprox()
@@ -520,4 +642,5 @@ if __name__ == "__main__":
     # visualizeSiLUAndZeroOrderApprox()
     # visualizeSigmoid()
     # visualizehSiLU()
-    visualizeSigmoidAndFirstOrderApprox()
+    # visualizeSigmoidAndFirstOrderApprox()
+    visualizeSiLUAndDerivatives()
