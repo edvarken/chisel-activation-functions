@@ -157,4 +157,5 @@ If `sbt run` gives errors saying "no Main Class detected", try to directly run t
 
 ### Acknowledgements
 Credits to https://github.com/zhemao/chisel-float/ for the floating point multiplier and adder. See LICENSE
+
 Credits to https://github.com/ucb-bar/berkeley-hardfloat/ for the floating point divider unit. See LICENSE

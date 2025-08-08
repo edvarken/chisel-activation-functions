@@ -335,9 +335,9 @@ def visualizeSigmoid():
 
 
 def visualizeSiLUAndZeroOrderApprox():
-    plot = plt.figure(figsize=(12, 10)) 
+    plot = plt.figure(figsize=(12, 9)) 
     plt.rcParams["font.family"] = "Times New Roman"
-    xmin = -2
+    xmin = -4
     xmax = 4
     ymin = -1
     ymax = 4
@@ -345,26 +345,38 @@ def visualizeSiLUAndZeroOrderApprox():
     ax = plt.gca()
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
-    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
-    plt.yticks(np.arange(ymin, ymax+1, 1), fontsize=14)
+    plt.xticks(np.arange(xmin, xmax+1, 1))
+    plt.yticks(np.arange(ymin, ymax+1, 1))
+    ax.tick_params(axis='both', labelsize=26)  # Overwrite tick label font size for both axes
 
     colors = ['k', 'blue'] # black for official, blue for 256 segments of zero-order approx. silu
 
+    # to simplify the figure, only use 64 segments in -8,8, 
     # real SiLU
     x = np.linspace(xmin, xmax, 1000)
     exact_silu = x / (1 + np.exp(-x))
     plt.rcParams['text.usetex'] = True
-    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=1.5)
+    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=2.5)
 
-    # 256 segments of zero-order approximation of SiLU in -8,8 which means 128 segments in -4,4
-    # which means 64 segments in 0,4
-    segment_edges = np.linspace(xmin, xmax, int((xmax-xmin)/16 * 256))  # 96 segments => 97 edges
-    segment_centers = (segment_edges[:-1] + segment_edges[1:]) / 2  # 96 centers
+    # 32 segments in -4,4
+    # which means 16 segments in 0,4; which means 24 segments in -2,4
+    # Create 32 segments in [-4, 4], but set 2 segments left and right of zero to zero
+    num_segments = 32
+    segment_edges = np.linspace(xmin, xmax, num_segments + 1)
+    segment_centers = (segment_edges[:-1] + segment_edges[1:]) / 2
     silu_centers = segment_centers / (1 + np.exp(-segment_centers))
 
+    # Set 2 segments left and right of zero to zero
+    # Find the index of the segment center closest to zero
+    zero_idx = np.argmin(np.abs(segment_centers))
+    # Set two segments left and right of zero to zero
+    for i in range(zero_idx+1, zero_idx + 1):
+        if 0 <= i < len(silu_centers):
+            silu_centers[i] = 0.0
+
     # For plotting, draw a horizontal line for each segment
-    for i in range(len(segment_centers)): # 96 segments in -2,4
-        ax.hlines(silu_centers[i], segment_edges[i], segment_edges[i+1], colors=colors[1], linestyles='-', linewidth=1.5, label='SiLU zero-order approx. using 256 segments in [-8,8]' if i == 0 else "")
+    for i in range(len(segment_centers)): # 24 segments in -2,4
+        ax.hlines(silu_centers[i], segment_edges[i], segment_edges[i+1], colors=colors[1], linestyles='-', linewidth=4, label='Zero-order approx. using 32 segments in [-4,4]' if i == 0 else "")
 
     # Only add the label once for the legend (on the first segment)
 
@@ -382,16 +394,16 @@ def visualizeSiLUAndZeroOrderApprox():
     ax.yaxis.set_ticks_position('left')
 
     # Make axes arrows (ensure arrow tips are visible within figure bounds)
-    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    arrowprops = dict(arrowstyle="->", linewidth=1.8, color='black', shrinkA=0, shrinkB=0)
     # Use slightly less than the axis limits for arrow tips
-    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
-    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False, fontsize=26)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False, fontsize=26)
 
     # Place axis labels at arrow tips, just inside the bounds
-    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.25), fontsize=16, fontweight='bold', clip_on=False)
-    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.52), fontsize=30, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.55, ymax-0.15), fontsize=30, fontweight='bold', clip_on=False)
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.01, -0.3), ncol=1, fontsize=34)
     plt.tight_layout()
     plt.show()
 
@@ -639,8 +651,8 @@ if __name__ == "__main__":
     # visualizeDyTAndApprox()
     ###########################
 
-    visualizeGELUAndSiLU()
-    # visualizeSiLUAndZeroOrderApprox()
+    # visualizeGELUAndSiLU()
+    visualizeSiLUAndZeroOrderApprox()
     # visualizeSigmoid()
     # visualizehSiLU()
     # visualizeSigmoidAndFirstOrderApprox()
