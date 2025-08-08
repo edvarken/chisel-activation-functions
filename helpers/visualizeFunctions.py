@@ -239,7 +239,7 @@ def visualizeDyTAndApprox():
 #########################################################################################################
 
 def visualizeGELUAndSiLU():
-    plot = plt.figure(figsize=(12, 10)) 
+    plot = plt.figure(figsize=(10, 10)) 
     plt.rcParams["font.family"] = "Times New Roman"
     xmin = -4
     xmax = 4
@@ -251,7 +251,7 @@ def visualizeGELUAndSiLU():
     plt.ylim(ymin, ymax)
     plt.xticks(np.arange(xmin, xmax+1, 1))
     plt.yticks(np.arange(ymin, ymax+1, 1))
-    ax.tick_params(axis='both', labelsize=17)  # Set tick label font size for both axes
+    ax.tick_params(axis='both', labelsize=28)  # Set tick label font size for both axes
 
     colors = ['blue', 'red']
 
@@ -259,11 +259,11 @@ def visualizeGELUAndSiLU():
     x = np.linspace(xmin, xmax, 1000)
     exact_silu = x / (1 + np.exp(-x))
     plt.rcParams['text.usetex'] = True
-    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=1.5)
+    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=5)
 
     # real GELU
     exact_gelu = x * 0.5 * (1 + erf(x / np.sqrt(2)))
-    ax.plot(x, exact_gelu, label='GELU', color=colors[1], linestyle='-', linewidth=2)
+    ax.plot(x, exact_gelu, label='GELU', color=colors[1], linestyle='-', linewidth=5)
 
     # Move spines to center
     ax.spines['left'].set_position('center')
@@ -272,16 +272,16 @@ def visualizeGELUAndSiLU():
     ax.spines['top'].set_color('none')
 
     # Make axes arrows (ensure arrow tips are visible within figure bounds)
-    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
+    arrowprops = dict(arrowstyle="->", linewidth=1.8, color='black', shrinkA=0, shrinkB=0)
     # Use slightly less than the axis limits for arrow tips
-    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False, fontsize=20)
-    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False, fontsize=20)
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False, fontsize=28)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False, fontsize=28)
 
     # Place axis labels at arrow tips, just inside the bounds
-    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.26, -0.5), fontsize=22, fontweight='bold', clip_on=False)
-    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=22, fontweight='bold', clip_on=False)
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.2, -0.6), fontsize=32, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.5, ymax-0.15), fontsize=32, fontweight='bold', clip_on=False)
 
-    plt.legend(loc='upper left', bbox_to_anchor=(0.01, 0.95), ncol=1, fontsize=27)
+    plt.legend(loc='upper left', bbox_to_anchor=(0.01, 0.95), ncol=1, fontsize=38)
     plt.tight_layout()
     plt.show()
 
