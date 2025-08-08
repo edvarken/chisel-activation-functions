@@ -108,16 +108,16 @@ def pareto_plot_1function(func="SiLU", data=SILU_DATA, xmin=0, xmax=2000, ymin=0
 def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax=2000, ymin=0, ymax=0.01, n_yticks=21, with_grid=False):
     plt.figure(figsize=(12, 8))
     plt.rcParams["font.family"] = "Times New Roman"
-    plt.title("MSE versus Area for SiLU, GELU, and DyT Variants", fontsize=18, fontweight='bold', pad=100)
+    # plt.title("MSE versus Area for SiLU, GELU, and DyT Variants", fontsize=18, fontweight='bold', pad=100)
     ax = plt.gca() # Get current axes
     plt.xlim(xmin, xmax)
     # Ensure ymin is positive for log scale
     ymin_log = ymin if ymin > 0 else 1e-6
     plt.ylim(ymin_log, ymax)
-    plt.xticks(fontsize=14)
+    plt.xticks(fontsize=16)
     # Add more ticks for the y-axis in logarithmic scale and scientific notation
     yticks = np.logspace(np.log10(ymin_log), np.log10(ymax), n_yticks)
-    plt.yticks(yticks, [f"{y:.1e}" for y in yticks], fontsize=14)
+    plt.yticks(yticks, [f"{y:.1e}" for y in yticks], fontsize=16)
 
     # Names for each function for annotation
     func_names = ["SiLU", "GELU", "DyT"]
@@ -139,8 +139,8 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
     ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
 
     # Place axis labels at the center of each axis, just outside the plot area
-    ax.set_xlabel('Area [um²]', fontsize=17, labelpad=5)
-    ax.set_ylabel('MSE', fontsize=17, labelpad=5, rotation=0, ha='right', va='center')
+    ax.set_xlabel('Area [um²]', fontsize=19, labelpad=5)
+    ax.set_ylabel('MSE', fontsize=19, labelpad=5, rotation=0, ha='right', va='center')
     ax.set_yscale('log')  # Use logarithmic scale for y-axis
 
     # Define legend groups and their descriptions
@@ -166,7 +166,7 @@ def pareto_plot_allfunctions(data=(SILU_DATA, GELU_DATA, DYT_DATA), xmin=0, xmax
 
     # Place legend above the plot, boxed, with more columns
     ax.legend(handles=handles, loc='lower center', bbox_to_anchor=(0.5, 1.02),
-              fontsize=13, frameon=True, ncol=3)
+              fontsize=15, frameon=True, ncol=3)
 
     if with_grid:
         ax.yaxis.grid(True, which='both', linestyle='--', linewidth=0.7)

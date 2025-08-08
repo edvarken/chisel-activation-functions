@@ -249,8 +249,9 @@ def visualizeGELUAndSiLU():
     ax = plt.gca()
     plt.xlim(xmin, xmax)
     plt.ylim(ymin, ymax)
-    plt.xticks(np.arange(xmin, xmax+1, 1), fontsize=14)
-    plt.yticks(np.arange(ymin, ymax+1, 1), fontsize=14)
+    plt.xticks(np.arange(xmin, xmax+1, 1))
+    plt.yticks(np.arange(ymin, ymax+1, 1))
+    ax.tick_params(axis='both', labelsize=17)  # Set tick label font size for both axes
 
     colors = ['blue', 'red']
 
@@ -273,14 +274,14 @@ def visualizeGELUAndSiLU():
     # Make axes arrows (ensure arrow tips are visible within figure bounds)
     arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0)
     # Use slightly less than the axis limits for arrow tips
-    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
-    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False, fontsize=20)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False, fontsize=20)
 
     # Place axis labels at arrow tips, just inside the bounds
-    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.15, -0.25), fontsize=16, fontweight='bold', clip_on=False)
-    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.26, -0.5), fontsize=22, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-0.35, ymax-0.15), fontsize=22, fontweight='bold', clip_on=False)
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2, fontsize=15)
+    plt.legend(loc='upper left', bbox_to_anchor=(0.01, 0.95), ncol=1, fontsize=27)
     plt.tight_layout()
     plt.show()
 
@@ -638,9 +639,9 @@ if __name__ == "__main__":
     # visualizeDyTAndApprox()
     ###########################
 
-    # visualizeGELUAndSiLU()
+    visualizeGELUAndSiLU()
     # visualizeSiLUAndZeroOrderApprox()
     # visualizeSigmoid()
     # visualizehSiLU()
     # visualizeSigmoidAndFirstOrderApprox()
-    visualizeSiLUAndDerivatives()
+    # visualizeSiLUAndDerivatives()
