@@ -289,14 +289,14 @@ def visualizeGELUAndSiLU():
 def visualizeSigmoid():
     plt.figure(figsize=(12, 10)) 
     plt.rcParams["font.family"] = "Times New Roman"
-    # xmin = -8 # these were used for the invSigmoid plot
-    # xmax = 8
-    # ymin = -0.2
-    # ymax = 1
-    xmin = -4
-    xmax = 4
-    ymin = -4
-    ymax = 4
+    xmin = -8 # these were used for the invSigmoid plot
+    xmax = 8
+    ymin = 0
+    ymax = 1
+    # xmin = -4 # these are just for a simple symmetric sigmoid plot
+    # xmax = 4
+    # ymin = -4
+    # ymax = 4
 
     ax = plt.gca()
     plt.xlim(xmin, xmax)
@@ -304,14 +304,15 @@ def visualizeSigmoid():
     # Ticks at axis ends so they overlap with arrows
     plt.xticks(np.arange(xmin, xmax+0.5, 2), fontsize=14)
     plt.yticks(np.arange(ymin, ymax+0.1, 0.1), fontsize=14)
+    ax.tick_params(axis='both', labelsize=26)  # Set tick label font size for both axes
 
-    colors = ['k', 'grey']
+    colors = ['blue', 'grey']
 
     # real sigmoid
     x = np.linspace(xmin, xmax, 1000)
     exact_silu = 1 / (1 + np.exp(-x))
     plt.rcParams['text.usetex'] = True
-    ax.plot(x, exact_silu, label=r'Sigmoid', color=colors[0], linestyle='-', linewidth=1.7)
+    ax.plot(x, exact_silu, label=r'Sigmoid', color=colors[0], linestyle='-', linewidth=3)
 
     # Move spines so they overlap with the arrows
     ax.spines['left'].set_position(('data', 0))
@@ -320,16 +321,16 @@ def visualizeSigmoid():
     ax.spines['top'].set_color('none')
 
     # Make axes arrows (draw arrows above the axes ticks)
-    arrowprops = dict(arrowstyle="->", linewidth=1.2, color='black', shrinkA=0, shrinkB=0, zorder=10)
-    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False)
-    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False)
+    arrowprops = dict(arrowstyle="->", linewidth=1.8, color='black', shrinkA=0, shrinkB=0, zorder=10)
+    ax.annotate('', xy=(xmax, 0), xytext=(xmin, 0), arrowprops=arrowprops, clip_on=False, fontsize=26)
+    ax.annotate('', xy=(0, ymax), xytext=(0, ymin), arrowprops=arrowprops, clip_on=False, fontsize=26)
     ax.set_axisbelow(True)
 
     # Place axis labels at arrow tips, just inside the bounds
-    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.25, -0.1), fontsize=16, fontweight='bold', clip_on=False)
-    ax.annotate('y', xy=(0, ymax), xytext=(-0.6, ymax-0.05), fontsize=16, fontweight='bold', clip_on=False)
+    ax.annotate('x', xy=(xmax, 0), xytext=(xmax-0.25, -0.1), fontsize=32, fontweight='bold', clip_on=False)
+    ax.annotate('y', xy=(0, ymax), xytext=(-1.3, ymax-0.02), fontsize=32, fontweight='bold', clip_on=False)
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=1, fontsize=15)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.35, -0.04), ncol=1, fontsize=38)
     plt.tight_layout()
     plt.show()
 
@@ -656,7 +657,7 @@ if __name__ == "__main__":
 
     # visualizeGELUAndSiLU()
     # visualizeSiLUAndZeroOrderApprox()
-    # visualizeSigmoid()
+    visualizeSigmoid()
     # visualizehSiLU()
     # visualizeSigmoidAndFirstOrderApprox()
-    visualizeSiLUAndDerivatives()
+    # visualizeSiLUAndDerivatives()
