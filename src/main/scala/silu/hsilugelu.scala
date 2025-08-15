@@ -53,6 +53,10 @@ class hsilugelu extends Module {
   fpmult2.io.a := res2
   fpmult2.io.b := magic_val
   // val output = fpmult2.io.res
+
+  // val outputReg = RegInit(0.U(16.W)) // 16-bit register for the output
+  // outputReg := fpmult2.io.res
+  // io.out_a := outputReg
   io.out_a := fpmult2.io.res
 }
 

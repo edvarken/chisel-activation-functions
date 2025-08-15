@@ -158,7 +158,7 @@ class rangeGN(val C: Int) extends Module {
 
   // === Multiply by recip_alpha ===
   val finalMuls = Seq.fill(N)(Module(new FPMult16ALT)) // 1cc latency per multiplier
-  // val result = Reg(Vec(N, UInt(16.W))) // adds extra 1cc latency for the output register: check if it fixes C.P.D
+  // val result = Reg(Vec(N, UInt(16.W))) // adds extra 1cc latency for the output register
   val result = Wire(Vec(N, UInt(16.W))) // without register
 
   for (i <- 0 until N) {

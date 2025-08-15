@@ -259,11 +259,14 @@ def visualizeGELUAndSiLU():
     x = np.linspace(xmin, xmax, 1000)
     exact_silu = x / (1 + np.exp(-x))
     plt.rcParams['text.usetex'] = True
-    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=5)
+    ax.plot(x, exact_silu, label='SiLU', color=colors[0], linestyle='-', linewidth=4)
 
     # real GELU
     exact_gelu = x * 0.5 * (1 + erf(x / np.sqrt(2)))
-    ax.plot(x, exact_gelu, label='GELU', color=colors[1], linestyle='-', linewidth=5)
+    ax.plot(x, exact_gelu, label='GELU', color=colors[1], linestyle='-', linewidth=4)
+
+    # add a y=x dotted line
+    ax.plot(x, x, label='y=x', color='grey', linestyle='--', linewidth=2)
 
     # Move spines to center
     ax.spines['left'].set_position('center')
@@ -655,9 +658,9 @@ if __name__ == "__main__":
     # visualizeDyTAndApprox()
     ###########################
 
-    # visualizeGELUAndSiLU()
+    visualizeGELUAndSiLU()
     # visualizeSiLUAndZeroOrderApprox()
-    visualizeSigmoid()
+    # visualizeSigmoid()
     # visualizehSiLU()
     # visualizeSigmoidAndFirstOrderApprox()
     # visualizeSiLUAndDerivatives()
