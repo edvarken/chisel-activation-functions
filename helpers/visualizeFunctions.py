@@ -365,7 +365,7 @@ def visualizeSiLUAndZeroOrderApprox():
     # 32 segments in -4,4
     # which means 16 segments in 0,4; which means 24 segments in -2,4
     # Create 32 segments in [-4, 4], but set 2 segments left and right of zero to zero
-    num_segments = 32
+    num_segments = 128
     segment_edges = np.linspace(xmin, xmax, num_segments + 1)
     segment_centers = (segment_edges[:-1] + segment_edges[1:]) / 2
     silu_centers = segment_centers / (1 + np.exp(-segment_centers))
@@ -380,7 +380,7 @@ def visualizeSiLUAndZeroOrderApprox():
 
     # For plotting, draw a horizontal line for each segment
     for i in range(len(segment_centers)): # 24 segments in -2,4
-        ax.hlines(silu_centers[i], segment_edges[i], segment_edges[i+1], colors=colors[1], linestyles='-', linewidth=4, label='Zero-order approx. using 32 segments in [-4,4]' if i == 0 else "")
+        ax.hlines(silu_centers[i], segment_edges[i], segment_edges[i+1], colors=colors[1], linestyles='-', linewidth=4, label='Zero-order approx. using 128 segments in [-4,4]' if i == 0 else "")
 
     # Only add the label once for the legend (on the first segment)
 
@@ -658,8 +658,8 @@ if __name__ == "__main__":
     # visualizeDyTAndApprox()
     ###########################
 
-    visualizeGELUAndSiLU()
-    # visualizeSiLUAndZeroOrderApprox()
+    # visualizeGELUAndSiLU()
+    visualizeSiLUAndZeroOrderApprox()
     # visualizeSigmoid()
     # visualizehSiLU()
     # visualizeSigmoidAndFirstOrderApprox()

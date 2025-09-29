@@ -119,7 +119,7 @@ def cumulative_bar_chart_transfo_block(systolic_array_size=16, staticmm_ws_cycle
 def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CPU=True):
     plt.rcParams["font.family"] = "Times New Roman"
     ResNet_colors = ["#9231C2", "#366FC0", "#EA190E", "#979595"]
-    Transformer_colors = ["#9231C2", "#EA190E", '#366FC0', "#902E28", "#E1BD4F", '#979595']
+    Transformer_colors = ["#9231C2", "#E1BD4F", "#EA190E", '#366FC0', "#902E28", '#979595']
     if nonlinearfunctions_on_CPU:
         ResNet_Block_layers = ["2 × CONV3", "2 × CPU GroupNorm", "2 × CPU SiLU", "2 × residual addition"]
         ResNet_Block_layers_cycles = [31749978, 307320340, 212658420, 1205378]
@@ -127,11 +127,11 @@ def cumulative_barchart_L0_resnet_and_transformer_block(nonlinearfunctions_on_CP
         #     "2 × CONV1", "1 × CPU GELU", "4 × CPU GroupNorm or LayerNorm",
         #     "1 × CPU SoftMax", "9 × MatMuls", "4 × residual addition"]
         Transformer_Block_layers = [
-            "CONV1 and CONV3", "CPU GELU and SiLU", "CPU GroupNorm or LayerNorm",
-            "CPU SoftMax", "MatMuls", "residual addition"]
+            "CONV1 and CONV3", "MatMuls", "CPU GELU and SiLU", "CPU GroupNorm or LayerNorm",
+            "CPU SoftMax", "residual addition"]
         Transformer_Block_layers_cycles = [
-            8958538, 478088080, (153660170+399038910),
-            233255710, (3835741+5719444+13346980+6770071+5795875+1756063), 2410756]
+            8958538,(3835741+5719444+13346980+6770071+5795875+1756063), 478088080, (153660170+399038910),
+            233255710, 2410756]
     else:
         ResNet_Block_layers = ["2 × CONV3", "2 × range GN", "2 × LUT-based SiLU", "2 × residual addition"]
         ResNet_Block_layers_cycles = [31749978, 786432, 163840, 1205378]
